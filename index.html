@@ -1084,6 +1084,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       <button class="help-tab" data-ht="3">Scripts &amp; Tests</button>
       <button class="help-tab" data-ht="4">Sharing</button>
       <button class="help-tab" data-ht="5">AI Assistant</button>
+      <button class="help-tab" data-ht="6">Power Features</button>
     </div>
 
     <!-- Tab 0: Getting Started -->
@@ -1251,6 +1252,44 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       <h3>Inserting generated scripts</h3>
       <p>When the AI outputs code that looks like a test script, two buttons appear below the response: <strong>→ Tests</strong> and <strong>→ Pre-req</strong>. Click either to paste the script directly into that tab — no copy-paste needed.</p>
       <div class="help-note">Nothing is sent to any server in local mode. In API mode, your request context is sent to whichever API endpoint you configure — treat it like any other API call.</div>
+    </div>
+
+    <!-- Tab 6: Power Features -->
+    <div class="help-pane" id="help-pane-6">
+      <h3>Global Search — <span class="help-kbd">⌘ K</span> / <span class="help-kbd">Ctrl K</span></h3>
+      <p>Opens a spotlight-style search across everything in the app — collection request names, URLs, body content, and recent history. Arrow keys to navigate, Enter to open, Esc to close.</p>
+
+      <h3>WebSocket Client</h3>
+      <ul>
+        <li>Select <strong>WS</strong> from the method dropdown. The request/response panels are replaced with the WebSocket client.</li>
+        <li>Enter a <code>ws://</code> or <code>wss://</code> URL and click <strong>Connect</strong>.</li>
+        <li>The message log shows sent messages (<strong>↑</strong>), received messages (<strong>↓</strong>), and system events (<strong>—</strong>), each with a timestamp.</li>
+        <li>Select <strong>Text</strong> or <strong>JSON</strong> in the send bar. JSON mode validates the payload before sending.</li>
+        <li>Switching away from WS or opening a new tab automatically closes the connection.</li>
+      </ul>
+
+      <h3>Cookie Manager</h3>
+      <ul>
+        <li>Click <strong>Cookies</strong> in the sidebar to manage cookies.</li>
+        <li>Add a cookie with a domain, name, and value. The domain should be just the hostname — e.g. <code>api.example.com</code>, not <code>https://api.example.com/</code>.</li>
+        <li>Enabled cookies are automatically injected as a <code>Cookie</code> header on any request whose URL hostname matches the cookie's domain (exact match or subdomain).</li>
+        <li>Toggle the checkbox to disable a cookie without deleting it.</li>
+      </ul>
+      <div class="help-note">These are not real browser cookies — they cannot set or read <code>HttpOnly</code> or <code>Secure</code> cookies from servers. They are a key-value store injected as a request header, which is exactly what you need for session tokens and API cookies.</div>
+
+      <h3>Git History</h3>
+      <p>NakliPoster can browse the git history of your collection files — showing you every past version, who changed it, and when. You can restore any past version with one click.</p>
+      <h3>Before you start — git init</h3>
+      <div class="help-note">NakliPoster does <strong>not</strong> run git for you. Git History reads an existing git repository in your workspace folder. You need to set this up yourself in a terminal, once:<br><br><code>cd /path/to/your/workspace<br>git init<br>git add .<br>git commit -m "Initial collections"</code><br><br>After that, commit whenever you want a snapshot. NakliPoster reads those commits — it does not write them.</div>
+      <ul>
+        <li>Open a workspace folder (the folder you committed with git).</li>
+        <li>A <strong>⎇</strong> button appears on each collection row in the sidebar.</li>
+        <li>Click it to open the Git History modal for that collection.</li>
+        <li>The list shows commits that touched that collection's <code>.json</code> file — author, date, and commit message.</li>
+        <li>Click any commit to preview what the collection looked like at that point.</li>
+        <li>Click <strong>Restore</strong> to replace the current collection with that version. The file is written to disk immediately.</li>
+      </ul>
+      <p style="font-size:12px;color:var(--text-muted)">isomorphic-git (~220 KB) is loaded from CDN on first use and cached. No install required.</p>
     </div>
 
     <div class="modal-footer">
