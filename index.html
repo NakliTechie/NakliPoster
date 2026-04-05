@@ -290,6 +290,76 @@ button{cursor:pointer;font-family:inherit}
   border-radius:3px;padding:1px 6px;font-size:11px;color:var(--text-primary)}
 .help-pane .help-note{background:var(--bg-hover);border-left:3px solid var(--accent);
   border-radius:0 4px 4px 0;padding:8px 12px;margin:10px 0;font-size:12px;color:var(--text-secondary)}
+/* ── AI Panel ── */
+#ai-resize{width:4px;cursor:ew-resize;background:transparent;flex-shrink:0}
+#ai-resize:hover,#ai-resize.dragging{background:var(--accent)}
+#ai-panel{width:320px;min-width:260px;border-left:1px solid var(--border);
+  background:var(--bg-sidebar);display:flex;flex-direction:column;overflow:hidden;
+  flex-shrink:0}
+#ai-panel.collapsed,#ai-panel.collapsed+#ai-resize{width:0;min-width:0;border:none;display:none}
+.ai-hdr{padding:9px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:6px;flex-shrink:0}
+.ai-hdr-title{font-size:12px;font-weight:600;flex:1;color:var(--text-primary)}
+.ai-hdr-spark{font-size:14px;color:var(--accent)}
+.ai-mode-row{display:flex;padding:8px 10px 0;gap:5px;flex-shrink:0}
+.ai-mode-btn{flex:1;padding:4px 6px;border-radius:4px;border:1px solid var(--border);
+  background:none;color:var(--text-secondary);font-size:11px;transition:.1s}
+.ai-mode-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+#ai-settings{flex-shrink:0}
+#ai-settings>summary{padding:7px 10px;font-size:11px;color:var(--text-secondary);
+  cursor:pointer;list-style:none;user-select:none}
+#ai-settings>summary::-webkit-details-marker{display:none}
+#ai-settings>summary:hover{color:var(--text-primary)}
+.ai-settings-body{padding:6px 10px 10px;display:flex;flex-direction:column;gap:6px}
+.ai-cfg-input{width:100%;padding:5px 8px;background:var(--bg-input);
+  border:1px solid var(--border);border-radius:4px;color:var(--text-primary);
+  font-size:11.5px;outline:none;box-sizing:border-box}
+.ai-cfg-input:focus{border-color:var(--accent)}
+.ai-presets{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:2px}
+.ai-preset{padding:2px 7px;border-radius:3px;border:1px solid var(--border);
+  background:none;color:var(--text-secondary);font-size:10.5px;transition:.1s;cursor:pointer}
+.ai-preset:hover,.ai-preset.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ai-load-row{display:flex;gap:6px}
+#ai-status{margin:6px 10px;padding:5px 8px;background:var(--bg-input);border-radius:4px;
+  font-size:11px;color:var(--text-secondary);text-align:center;flex-shrink:0}
+#ai-status.ready{color:#4caf50}
+#ai-status.error{color:#ef5350}
+#ai-prog{height:3px;background:var(--bg-input);margin:0 10px 4px;border-radius:2px;
+  overflow:hidden;flex-shrink:0}
+#ai-prog-fill{height:100%;background:var(--accent);width:0%;transition:width .3s}
+.ai-quick{display:flex;flex-wrap:wrap;gap:4px;padding:6px 10px 8px;flex-shrink:0;
+  border-bottom:1px solid var(--border)}
+.ai-quick-btn{padding:3px 9px;border-radius:10px;border:1px solid var(--border);
+  background:none;color:var(--text-secondary);font-size:11px;cursor:pointer;transition:.1s}
+.ai-quick-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+#ai-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:8px 10px}
+.ai-ph{text-align:center;color:var(--text-muted);font-size:11px;margin-top:16px;line-height:1.7}
+.ai-divider{text-align:center;font-size:10px;color:var(--text-muted);margin:4px 0;
+  display:flex;align-items:center;gap:6px}
+.ai-divider::before,.ai-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.ai-msg{font-size:12px;line-height:1.55}
+.ai-bubble{padding:7px 10px;border-radius:6px;white-space:pre-wrap;word-break:break-word}
+.ai-msg.user .ai-bubble{background:rgba(255,110,64,.1);border:1px solid rgba(255,110,64,.2);
+  color:var(--text-primary)}
+.ai-msg.assistant .ai-bubble{background:var(--bg-input);border:1px solid var(--border);
+  color:var(--text-secondary)}
+.ai-msg-acts{display:flex;gap:4px;margin-top:4px}
+.ai-act-btn{background:none;border:1px solid var(--border);color:var(--text-secondary);
+  font-size:10px;padding:2px 6px;border-radius:3px;cursor:pointer;transition:.1s}
+.ai-act-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ai-input-row{display:flex;gap:5px;padding:8px 10px;border-top:1px solid var(--border);
+  flex-shrink:0;align-items:flex-end}
+#ai-textarea{flex:1;padding:6px 9px;background:var(--bg-input);border:1px solid var(--border);
+  border-radius:6px;color:var(--text-primary);font-size:12px;outline:none;resize:none;
+  font-family:inherit;min-height:48px;max-height:100px}
+#ai-textarea:focus{border-color:var(--accent)}
+.ai-send-btn{width:32px;height:32px;border-radius:6px;flex-shrink:0;background:var(--accent);
+  border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;transition:opacity .1s}
+.ai-send-btn:hover{opacity:.85}
+.ai-send-btn:disabled{opacity:.35;cursor:not-allowed}
+#ai-stop{background:#ef5350}
+.btn-ai-on{color:var(--accent)!important}
 .modal-body{padding:18px;flex:1;overflow-y:auto}
 .modal-footer{padding:10px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
 .form-row{margin-bottom:13px}
@@ -611,6 +681,64 @@ button{cursor:pointer;font-family:inherit}
       </div>
     </div>
   </div>
+  <div id="ai-resize"></div>
+  <div id="ai-panel" class="collapsed">
+    <div class="ai-hdr">
+      <span class="ai-hdr-spark">✦</span>
+      <span class="ai-hdr-title">AI Assistant</span>
+      <button class="icon-btn" id="btn-ai-close" title="Close">×</button>
+    </div>
+    <div class="ai-mode-row">
+      <button class="ai-mode-btn active" data-ai-mode="local">Local (WebGPU)</button>
+      <button class="ai-mode-btn" data-ai-mode="api">API</button>
+    </div>
+    <details id="ai-settings" open>
+      <summary id="ai-settings-summary">⚙ Settings</summary>
+      <div class="ai-settings-body" id="ai-local-cfg">
+        <select class="ai-cfg-input" id="ai-model-id">
+          <option value="gemma4-e2b">Gemma 4 E2B (~2 GB) — default</option>
+          <option value="gemma4-e4b">Gemma 4 E4B (~4 GB) — higher quality</option>
+          <option value="qwen-1.5b">Qwen 2.5 1.5B (~1 GB) — fast</option>
+          <option value="smollm-1.7b">SmolLM2 1.7B (~1 GB) — lightweight</option>
+        </select>
+        <div class="ai-load-row">
+          <button class="btn-primary" id="btn-ai-load" style="flex:1;font-size:12px;padding:5px 10px">Load Model</button>
+        </div>
+      </div>
+      <div class="ai-settings-body" id="ai-api-cfg" style="display:none">
+        <div class="ai-presets" id="ai-api-presets">
+          <button class="ai-preset active" data-url="https://openrouter.ai/api/v1">OpenRouter</button>
+          <button class="ai-preset" data-url="https://api.openai.com/v1">OpenAI</button>
+          <button class="ai-preset" data-url="https://api.groq.com/openai/v1">Groq</button>
+          <button class="ai-preset" data-url="http://localhost:1234/v1">LM Studio</button>
+          <button class="ai-preset" data-url="http://localhost:11434">Ollama</button>
+        </div>
+        <input class="ai-cfg-input" id="ai-api-url" placeholder="Base URL (OpenAI-compatible)" value="https://openrouter.ai/api/v1">
+        <input class="ai-cfg-input" id="ai-api-key" type="password" placeholder="API key (blank for LM Studio / Ollama)">
+        <div style="display:flex;gap:4px">
+          <input class="ai-cfg-input" id="ai-api-model" placeholder="Model ID" style="flex:1;min-width:0" list="ai-model-list">
+          <button class="icon-btn" id="btn-ai-fetch-models" title="Discover models" style="font-size:13px">↻</button>
+        </div>
+        <datalist id="ai-model-list"></datalist>
+      </div>
+    </details>
+    <div id="ai-status">No model loaded</div>
+    <div id="ai-prog" style="display:none"><div id="ai-prog-fill"></div></div>
+    <div class="ai-quick">
+      <button class="ai-quick-btn" data-ai-action="diagnose">Diagnose</button>
+      <button class="ai-quick-btn" data-ai-action="tests">Write Tests</button>
+      <button class="ai-quick-btn" data-ai-action="explain">Explain</button>
+      <button class="ai-quick-btn" data-ai-action="document">Document</button>
+    </div>
+    <div id="ai-messages">
+      <div class="ai-ph" data-ai-ph>Load a model or set an API key,<br>then ask anything about your request.</div>
+    </div>
+    <div class="ai-input-row">
+      <textarea id="ai-textarea" placeholder="Ask about this request… (Enter to send)" rows="2"></textarea>
+      <button class="ai-send-btn" id="ai-stop" style="display:none" title="Stop">■</button>
+      <button class="ai-send-btn" id="ai-send" disabled title="Send (Enter)">↑</button>
+    </div>
+  </div>
 </div>
 
 <div id="status-bar">
@@ -618,6 +746,7 @@ button{cursor:pointer;font-family:inherit}
   <span id="sb-msg"></span>
   <div id="sb-right">
     <select id="env-quick"><option value="">No Environment</option></select>
+    <button class="sb-btn" id="btn-ai-toggle">AI ✦</button>
     <button class="sb-btn" id="btn-settings-sb">Settings</button>
     <button class="sb-btn" id="btn-help-sb" title="Help">?</button>
     <a class="sb-btn" href="https://naklitechie.github.io/" target="_blank" style="text-decoration:none">naklitechie.github.io</a>
@@ -3081,6 +3210,402 @@ async function confirmLinkImport(){
   history.replaceState(null,'',location.pathname+location.search);
 }
 
+// ── AI Panel (Tier 5) ──
+const AI_MODELS = {
+  'gemma4-e2b':  { id:'onnx-community/gemma-4-E2B-it-ONNX',      dtype:'q4f16', type:'multimodal' },
+  'gemma4-e4b':  { id:'onnx-community/gemma-4-E4B-it-ONNX',      dtype:'q4f16', type:'multimodal' },
+  'qwen-1.5b':   { id:'Qwen/Qwen2.5-1.5B-Instruct',              dtype:'q4f16', type:'causal' },
+  'smollm-1.7b': { id:'HuggingFaceTB/SmolLM2-1.7B-Instruct',     dtype:'q4f16', type:'causal' },
+};
+const LS_AI_MODEL='np_ai_model';
+const LS_AI_W='np_ai_w';
+const LS_AI_OPEN='np_ai_open';
+
+const ai={mode:'local',worker:null,modelReady:false,modelLoading:false,history:[],streaming:false};
+
+const AI_WORKER_SRC=`
+import {
+  env,AutoTokenizer,AutoModelForCausalLM,
+  AutoProcessor,Gemma4ForConditionalGeneration,
+  TextStreamer,InterruptableStoppingCriteria,
+} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4/+esm';
+env.allowLocalModels=true;env.localModelPath='/models/';env.allowRemoteModels=true;env.useBrowserCache=true;
+let processor=null,tokenizer=null,model=null,loadedType=null;
+const sc=new InterruptableStoppingCriteria();
+const prog=p=>self.postMessage({type:'progress',data:p});
+async function loadCausal(id,dtype){
+  tokenizer=await AutoTokenizer.from_pretrained(id,{progress_callback:prog});
+  model=await AutoModelForCausalLM.from_pretrained(id,{dtype,device:'webgpu',progress_callback:prog});
+  self.postMessage({type:'status',data:'Warming up…'});
+  await model.generate({...tokenizer('a'),max_new_tokens:1});
+  loadedType='causal';
+}
+async function loadMultimodal(id,dtype){
+  processor=await AutoProcessor.from_pretrained(id,{progress_callback:prog});
+  tokenizer=processor.tokenizer;
+  model=await Gemma4ForConditionalGeneration.from_pretrained(id,{dtype,device:'webgpu',progress_callback:prog});
+  self.postMessage({type:'status',data:'Warming up…'});
+  await model.generate({...tokenizer('a'),max_new_tokens:1});
+  loadedType='multimodal';
+}
+async function generate(messages,id,maxTokens){
+  sc.reset();
+  const streamer=new TextStreamer(tokenizer,{
+    skip_prompt:true,skip_special_tokens:true,
+    callback_function:tok=>self.postMessage({type:'token',token:tok,id}),
+  });
+  if(loadedType==='multimodal'){
+    const prompt=processor.apply_chat_template(messages,{add_generation_prompt:true});
+    const inputs=await processor(prompt,null,null,{add_special_tokens:false});
+    await model.generate({...inputs,max_new_tokens:maxTokens,do_sample:true,temperature:1.0,top_k:64,top_p:0.95,streamer,stopping_criteria:sc});
+  } else {
+    const inputs=tokenizer.apply_chat_template(messages,{add_generation_prompt:true,return_dict:true});
+    await model.generate({...inputs,max_new_tokens:maxTokens,do_sample:true,temperature:0.7,top_k:50,top_p:0.95,streamer,stopping_criteria:sc});
+  }
+}
+self.addEventListener('message',async({data:{type,modelId,dtype,modelType,messages,id,maxTokens}})=>{
+  try{
+    if(type==='load'){
+      self.postMessage({type:'status',data:'Loading tokenizer…'});
+      if(modelType==='multimodal') await loadMultimodal(modelId,dtype);
+      else await loadCausal(modelId,dtype);
+      self.postMessage({type:'ready'});
+    } else if(type==='generate'){
+      await generate(messages,id,maxTokens??800);
+      self.postMessage({type:'complete',id});
+    } else if(type==='stop'){
+      sc.interrupt();
+    }
+  } catch(err){
+    self.postMessage({type:'error',data:err.message||String(err)});
+  }
+});
+`;
+
+function makeAIWorker(){
+  const blob=new Blob([AI_WORKER_SRC],{type:'application/javascript'});
+  return new Worker(URL.createObjectURL(blob),{type:'module'});
+}
+
+function aiSetStatus(msg,cls=''){
+  const el=$('ai-status');
+  el.textContent=msg;
+  el.className=cls;
+}
+
+function buildAIContext(){
+  saveUIToTab();
+  const tab=getActiveTab();
+  if(!tab) return 'No active request.';
+  const lines=['## Current Request'];
+  lines.push(`Method: ${tab.method}`);
+  lines.push(`URL: ${tab.url||'(empty)'}`);
+  const hdrs=(tab.headers||[]).filter(h=>h.k&&h.enabled!==false);
+  if(hdrs.length) lines.push(`Headers: ${hdrs.map(h=>`${h.k}: ${h.v}`).join(', ')}`);
+  if(tab.bodyMode&&tab.bodyMode!=='none'&&tab.bodyRaw){
+    const b=tab.bodyRaw;
+    lines.push(`Body (${tab.bodyMode}): ${b.slice(0,600)}${b.length>600?'…':''}`);
+  }
+  if(tab.auth?.type&&tab.auth.type!=='none') lines.push(`Auth: ${tab.auth.type}`);
+  if(tab.response){
+    const r=tab.response;
+    lines.push('','## Last Response');
+    lines.push(`Status: ${r.status} ${r.statusText||''}`);
+    lines.push(`Time: ${r.time}ms, Size: ${r.size} bytes`);
+    const rb=r.body||'';
+    lines.push(`Body: ${rb.slice(0,2000)}${rb.length>2000?'… (truncated)':''}`);
+    const ct=r.contentType;
+    if(ct) lines.push(`Content-Type: ${ct}`);
+  } else {
+    lines.push('','## Last Response: (not sent yet)');
+  }
+  const env=S.environments.find(e=>e.id===S.activeEnvId);
+  if(env){
+    lines.push('',`## Active Environment: ${env.name}`);
+    const vars=(env.variables||[]).filter(v=>v.k&&!v.secret);
+    if(vars.length) lines.push(`Variables: ${vars.map(v=>`${v.k}=${v.v}`).join(', ')}`);
+  }
+  const globals=(S.globals||[]).filter(g=>g.k&&!g.secret);
+  if(globals.length) lines.push(`Globals: ${globals.map(g=>`${g.k}=${g.v}`).join(', ')}`);
+  return lines.join('\n');
+}
+
+function buildAIMessages(userMsg){
+  const ctx=buildAIContext();
+  const system=`You are an AI assistant built into NakliPoster, a local-first API client (Postman alternative).
+
+${ctx}
+
+Help the developer debug APIs, write test scripts, explain responses, and document endpoints.
+
+When writing test scripts, use the pm API:
+  pm.test('name', () => { pm.expect(...).to... });
+  pm.response.code, pm.response.json(), pm.response.text()
+  pm.response.headers['header-name']
+  pm.environment.set('key', value)
+
+If asked to generate or fix a script, output ONLY raw JavaScript — no markdown fences, no preamble.
+Keep responses concise and actionable.`;
+  return [{role:'system',content:system},...ai.history.slice(-8),{role:'user',content:userMsg}];
+}
+
+function aiAddBubble(role,content){
+  const msgs=$('ai-messages');
+  $a('[data-ai-ph]',msgs).forEach(el=>el.remove());
+  const wrap=document.createElement('div');
+  wrap.className=`ai-msg ${role}`;
+  const bid='aib-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+  wrap.innerHTML=`<div class="ai-bubble" id="${bid}"></div>`;
+  wrap.querySelector('.ai-bubble').textContent=content;
+  msgs.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
+  return {wrap,bid};
+}
+
+function aiFinalize(wrap,content){
+  const isScript=/^(pm\.|\/\/|const |let |var |function )/.test(content.trim());
+  const acts=document.createElement('div');
+  acts.className='ai-msg-acts';
+  let html=`<button class="ai-act-btn" data-copy>Copy</button>`;
+  if(isScript){
+    html+=`<button class="ai-act-btn" data-ins="tests">→ Tests</button>`;
+    html+=`<button class="ai-act-btn" data-ins="prereq">→ Pre-req</button>`;
+  }
+  acts.innerHTML=html;
+  acts.querySelector('[data-copy]').onclick=()=>navigator.clipboard.writeText(content).then(()=>toast('Copied','ok'));
+  acts.querySelector('[data-ins="tests"]')?.addEventListener('click',()=>{
+    $('tests-editor').value=content; markDirty(); toast('Inserted into Tests tab','ok');
+  });
+  acts.querySelector('[data-ins="prereq"]')?.addEventListener('click',()=>{
+    $('prescript-editor').value=content; markDirty(); toast('Inserted into Pre-req tab','ok');
+  });
+  wrap.appendChild(acts);
+  ai.history.push({role:'assistant',content});
+}
+
+async function aiSend(overrideMsg){
+  if(ai.streaming) return;
+  const ta=$('ai-textarea');
+  const userMsg=overrideMsg||ta.value.trim();
+  if(!userMsg) return;
+  if(ai.mode==='local'&&!ai.modelReady){toast('Load a model first, or switch to API mode','err');return;}
+  if(ai.mode==='api'&&!$('ai-api-model').value.trim()){toast('Enter a model ID in API settings','err');return;}
+  if(!overrideMsg) ta.value='';
+  ai.streaming=true;
+  $('ai-send').disabled=true;
+  $('ai-stop').style.display='';
+  ai.history.push({role:'user',content:userMsg});
+  aiAddBubble('user',userMsg);
+  const messages=buildAIMessages(userMsg);
+  const {wrap,bid}=aiAddBubble('assistant','');
+  let full='';
+  const finish=()=>{
+    ai.streaming=false;
+    $('ai-stop').style.display='none';
+    $('ai-send').disabled=(ai.mode==='local'&&!ai.modelReady);
+    aiFinalize(wrap,full);
+  };
+  if(ai.mode==='local'){
+    ai.worker.onmessage=({data})=>{
+      if(data.type==='token'){
+        full+=data.token;
+        const el=$(bid); if(el){el.textContent+=data.token;$('ai-messages').scrollTop=9999;}
+      } else if(data.type==='complete'){
+        finish();
+      } else if(data.type==='error'){
+        const el=$(bid); if(el) el.textContent='Error: '+data.data;
+        ai.streaming=false;$('ai-stop').style.display='none';$('ai-send').disabled=false;
+      }
+    };
+    ai.worker.postMessage({type:'generate',messages,id:bid,maxTokens:800});
+  } else {
+    try{
+      const apiKey=$('ai-api-key').value.trim();
+      const apiModel=$('ai-api-model').value.trim();
+      const apiUrl=$('ai-api-url').value.trim();
+      const resp=await fetch(`${apiUrl}/chat/completions`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json',...(apiKey?{Authorization:`Bearer ${apiKey}`}:{})},
+        body:JSON.stringify({model:apiModel,messages,stream:true,max_tokens:800}),
+      });
+      if(!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+      const reader=resp.body.getReader();
+      const dec=new TextDecoder();
+      while(true){
+        const {done,value}=await reader.read();
+        if(done) break;
+        for(const line of dec.decode(value).split('\n')){
+          if(!line.startsWith('data: ')||line==='data: [DONE]') continue;
+          try{
+            const tok=JSON.parse(line.slice(6)).choices?.[0]?.delta?.content??'';
+            if(tok){full+=tok;const el=$(bid);if(el){el.textContent+=tok;$('ai-messages').scrollTop=9999;}}
+          } catch{/*skip*/}
+        }
+      }
+      finish();
+    } catch(err){
+      const el=$(bid);if(el) el.textContent='Error: '+err.message;
+      ai.streaming=false;$('ai-stop').style.display='none';$('ai-send').disabled=false;
+    }
+  }
+}
+
+async function loadAIModel(){
+  if(ai.modelLoading||ai.modelReady) return;
+  if(!navigator.gpu){aiSetStatus('WebGPU not available — use API mode','error');return;}
+  const key=$('ai-model-id').value;
+  const mdef=AI_MODELS[key];
+  if(!mdef) return;
+  ai.modelLoading=true;
+  $('btn-ai-load').disabled=true;
+  $('ai-prog').style.display='';
+  aiSetStatus('Starting…');
+  if(ai.worker) ai.worker.terminate();
+  ai.worker=makeAIWorker();
+  ai.worker.addEventListener('error',e=>{
+    aiSetStatus('Worker error: '+e.message,'error');
+    ai.modelLoading=false;$('btn-ai-load').disabled=false;$('ai-prog').style.display='none';
+  });
+  ai.worker.onmessage=({data})=>{
+    if(data.type==='progress'){
+      const pct=data.data?.progress!=null?Math.round(data.data.progress):0;
+      $('ai-prog-fill').style.width=pct+'%';
+      if(pct>0) aiSetStatus(`Loading… ${pct}%`);
+    } else if(data.type==='status'){
+      aiSetStatus(data.data);
+    } else if(data.type==='ready'){
+      ai.modelReady=true;ai.modelLoading=false;
+      localStorage.setItem(LS_AI_MODEL,key);
+      aiSetStatus('Model ready ✓','ready');
+      $('ai-prog').style.display='none';
+      $('ai-send').disabled=false;
+      $('ai-settings').removeAttribute('open');
+      $('ai-settings-summary').textContent='⚙ '+($('ai-model-id').selectedOptions[0]?.text?.split('(')[0]?.trim()||'Model');
+      $a('[data-ai-ph]',$('ai-messages')).forEach(el=>el.remove());
+    } else if(data.type==='error'){
+      ai.modelLoading=false;
+      aiSetStatus('Error: '+data.data,'error');
+      $('ai-prog').style.display='none';$('btn-ai-load').disabled=false;
+    }
+  };
+  ai.worker.postMessage({type:'load',modelId:mdef.id,dtype:mdef.dtype,modelType:mdef.type});
+}
+
+async function discoverAIModels(){
+  const baseUrl=$('ai-api-url').value.trim().replace(/\/+$/,'');
+  const apiKey=$('ai-api-key').value.trim();
+  const headers={Accept:'application/json'};
+  if(apiKey) headers.Authorization=`Bearer ${apiKey}`;
+  const btn=$('btn-ai-fetch-models');
+  btn.textContent='…';btn.disabled=true;
+  const endpoints=[
+    `${baseUrl}/models`,`${baseUrl}/v1/models`,
+    `${baseUrl}/api/v1/models`,`${baseUrl}/api/tags`,
+  ];
+  let found=[];
+  for(const url of endpoints){
+    try{
+      const res=await fetch(url,{headers,signal:AbortSignal.timeout(6000)});
+      if(!res.ok) continue;
+      const d=await res.json();
+      if(Array.isArray(d.data))   found=d.data.map(m=>m.id).filter(Boolean).sort();
+      if(Array.isArray(d.models)) found=d.models.map(m=>m.name||m.id).filter(Boolean).sort();
+      if(found.length) break;
+    } catch{/*try next*/}
+  }
+  btn.textContent='↻';btn.disabled=false;
+  if(found.length){
+    $('ai-model-list').innerHTML=found.map(id=>`<option value="${escHtml(id)}">`).join('');
+    if(found.length===1) $('ai-api-model').value=found[0];
+    toast(`Found ${found.length} model${found.length>1?'s':''}  — click the field to pick one`,'ok');
+  } else {
+    toast('No models found — is the server running?','err');
+  }
+}
+
+function toggleAIPanel(){
+  const panel=$('ai-panel');
+  const isCollapsed=panel.classList.toggle('collapsed');
+  $('btn-ai-toggle').classList.toggle('btn-ai-on',!isCollapsed);
+  lsSet(LS_AI_OPEN,!isCollapsed);
+  if(!isCollapsed){
+    const saved=lsGet(LS_AI_W,320);
+    panel.style.width=saved+'px';
+  }
+}
+
+function initAIResize(){
+  const handle=$('ai-resize');
+  const panel=$('ai-panel');
+  let drag=false,startX=0,startW=0;
+  handle.addEventListener('mousedown',e=>{
+    drag=true;startX=e.clientX;startW=panel.offsetWidth;
+    handle.classList.add('dragging');
+    document.body.style.cursor='ew-resize';
+    document.body.style.userSelect='none';
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!drag) return;
+    const nw=Math.max(260,Math.min(startW-(e.clientX-startX),600));
+    panel.style.width=nw+'px';
+  });
+  document.addEventListener('mouseup',()=>{
+    if(!drag) return;
+    drag=false;handle.classList.remove('dragging');
+    document.body.style.cursor='';document.body.style.userSelect='';
+    lsSet(LS_AI_W,panel.offsetWidth);
+  });
+}
+
+function bindAIEvents(){
+  $('btn-ai-toggle').onclick=toggleAIPanel;
+  $('btn-ai-close').onclick=toggleAIPanel;
+  $('btn-ai-load').onclick=loadAIModel;
+  $('btn-ai-fetch-models').onclick=discoverAIModels;
+  $('ai-send').onclick=()=>aiSend();
+  $('ai-stop').onclick=()=>{
+    if(ai.mode==='local'&&ai.worker) ai.worker.postMessage({type:'stop'});
+    ai.streaming=false;$('ai-stop').style.display='none';
+    $('ai-send').disabled=(ai.mode==='local'&&!ai.modelReady);
+  };
+  $('ai-textarea').addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();aiSend();}
+  });
+  $a('.ai-mode-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    $a('.ai-mode-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    ai.mode=btn.dataset.aiMode;
+    $('ai-local-cfg').style.display=ai.mode==='local'?'':'none';
+    $('ai-api-cfg').style.display=ai.mode==='api'?'':'none';
+    $('ai-send').disabled=ai.mode==='local'?!ai.modelReady:false;
+    $('ai-settings').setAttribute('open','');
+  }));
+  $a('.ai-preset').forEach(btn=>btn.addEventListener('click',()=>{
+    $a('.ai-preset').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    $('ai-api-url').value=btn.dataset.url;
+    $('ai-api-model').value='';
+  }));
+  const quickPrompts={
+    diagnose:()=>{
+      const r=getActiveTab()?.response;
+      return r&&r.status>=400
+        ?`The request returned ${r.status} ${r.statusText||''}. What's wrong and how do I fix it?`
+        :`Diagnose this API request and response. Any issues or suggestions?`;
+    },
+    tests:()=>'Write a comprehensive pm.test() test script for this response.',
+    explain:()=>'Explain this API response in plain English. What does the data represent?',
+    document:()=>'Write concise API documentation for this endpoint: method, URL, parameters, auth, example response.',
+  };
+  $a('.ai-quick-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    const fn=quickPrompts[btn.dataset.aiAction];
+    if(!fn) return;
+    if($('ai-panel').classList.contains('collapsed')) toggleAIPanel();
+    aiSend(fn());
+  }));
+  initAIResize();
+}
+
 // ── Init ──
 function init(){
   loadSettings();
@@ -3116,6 +3641,12 @@ function init(){
   renderEnvEditor();
   bindEvents();
   initResize();
+  bindAIEvents();
+
+  // Restore AI panel state
+  if(lsGet(LS_AI_OPEN,false)) toggleAIPanel();
+  const lastAIModel=localStorage.getItem(LS_AI_MODEL);
+  if(lastAIModel&&AI_MODELS[lastAIModel]) $('ai-model-id').value=lastAIModel;
 
   // Status bar workspace
   if(S.dirHandle) $('sb-ws').textContent=`📁 ${S.dirHandle.name}`;
