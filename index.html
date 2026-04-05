@@ -362,6 +362,52 @@ button{cursor:pointer;font-family:inherit}
 .lp-label{color:var(--text-muted);width:80px;flex-shrink:0;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
 .lp-val{color:var(--text-primary)}
 #link-passphrase-wrap{margin-bottom:12px}
+
+/* ── Tier 4: Scripts + Tests ── */
+.script-editor{display:block;width:100%;height:100%;min-height:110px;background:var(--bg-app);
+  border:none;color:var(--text-primary);font-family:var(--font-mono);font-size:12px;
+  padding:8px 10px;outline:none;resize:none;user-select:text}
+.script-hint{font-size:10.5px;color:var(--text-muted);padding:4px 10px 0;border-top:1px solid var(--border)}
+
+/* Test results */
+#respanel-tests{overflow-y:auto;flex:1}
+.test-row{display:flex;align-items:flex-start;gap:8px;padding:6px 12px;
+  border-bottom:1px solid var(--border);font-size:12.5px}
+.test-icon{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+.test-pass .test-icon{background:rgba(73,204,144,.15);color:var(--s2xx)}
+.test-fail .test-icon{background:rgba(249,62,62,.15);color:var(--s4xx)}
+.test-name{flex:1}
+.test-err{font-size:11px;color:var(--s4xx);margin-top:2px;font-family:var(--font-mono)}
+.tests-summary{padding:6px 12px;font-size:11.5px;border-bottom:1px solid var(--border);
+  display:flex;gap:12px;flex-shrink:0}
+.tests-pass-count{color:var(--s2xx);font-weight:600}
+.tests-fail-count{color:var(--s4xx);font-weight:600}
+.no-tests-msg{padding:20px 12px;text-align:center;color:var(--text-muted);font-size:12px}
+.restab .badge{font-size:10px;padding:1px 5px;border-radius:8px;margin-left:3px;font-weight:700}
+.badge-pass{background:rgba(73,204,144,.2);color:var(--s2xx)}
+.badge-fail{background:rgba(249,62,62,.2);color:var(--s4xx)}
+
+/* Console */
+#respanel-console{overflow-y:auto;flex:1;font-family:var(--font-mono);font-size:12px}
+.con-row{padding:3px 12px;border-bottom:1px solid var(--border);white-space:pre-wrap;word-break:break-all;user-select:text}
+.con-log{color:var(--text-primary)}
+.con-warn{color:var(--s3xx);background:rgba(252,161,48,.05)}
+.con-error{color:var(--s4xx);background:rgba(249,62,62,.05)}
+.con-info{color:var(--m-get)}
+.no-console-msg{padding:20px 12px;text-align:center;color:var(--text-muted);font-size:12px}
+
+/* Collection Runner */
+#runner-results{margin-top:14px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:6px}
+.runner-row{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--border);font-size:12px}
+.runner-row:last-child{border-bottom:none}
+.runner-req-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.runner-status{font-weight:700;font-size:11px;width:38px;text-align:right;flex-shrink:0}
+.runner-time{color:var(--text-muted);font-size:11px;width:52px;text-align:right;flex-shrink:0}
+.runner-tests{font-size:11px;width:60px;text-align:right;flex-shrink:0}
+.runner-progress{height:3px;background:var(--accent);transition:width .2s;border-radius:2px}
+.runner-progress-wrap{height:3px;background:var(--border);border-radius:2px;margin:8px 0}
+#runner-summary{font-size:12.5px;padding:6px 0;display:flex;gap:16px}
 </style>
 </head>
 <body>
@@ -384,6 +430,7 @@ button{cursor:pointer;font-family:inherit}
     <div class="s-panel active" id="panel-collections">
       <div id="coll-toolbar">
         <input id="coll-search" placeholder="Search...">
+        <button class="icon-btn" id="btn-runner" title="Collection Runner">▶</button>
         <button class="icon-btn" id="btn-open-folder" title="Open workspace folder">🗂</button>
         <button class="icon-btn" id="btn-new-coll" title="New collection" style="font-size:18px;font-weight:300">+</button>
       </div>
@@ -452,6 +499,8 @@ button{cursor:pointer;font-family:inherit}
           <button class="req-tool-btn" id="btn-code-gen">Code</button>
           <button class="req-tool-btn" id="btn-share-req" title="Share this request as a link">Share</button>
         </div>
+        <button class="rtab" data-t="prescript">Pre-req</button>
+        <button class="rtab" data-t="tests">Tests</button>
       </div>
 
       <div class="rpanel active" id="rpanel-params">
@@ -489,6 +538,18 @@ button{cursor:pointer;font-family:inherit}
           <div id="auth-fields"></div>
         </div>
       </div>
+
+      <div class="rpanel" id="rpanel-prescript">
+        <textarea class="script-editor" id="prescript-editor" spellcheck="false"
+          placeholder="// Runs before the request is sent&#10;// pm.environment.set('token', 'abc123');&#10;// pm.globals.set('ts', Date.now());"></textarea>
+        <div class="script-hint">Access: pm.environment · pm.globals · pm.collectionVariables · pm.request · console.log()</div>
+      </div>
+
+      <div class="rpanel" id="rpanel-tests">
+        <textarea class="script-editor" id="tests-editor" spellcheck="false"
+          placeholder="// Runs after the response is received&#10;pm.test('Status is 200', () => {&#10;  pm.expect(pm.response.code).to.equal(200);&#10;});"></textarea>
+        <div class="script-hint">Access: pm.response · pm.expect() · pm.test() · console.log()</div>
+      </div>
     </div>
 
     <div id="resize-handle"></div>
@@ -508,6 +569,8 @@ button{cursor:pointer;font-family:inherit}
         <div id="res-tabs">
           <button class="restab active" data-rt="body">Body</button>
           <button class="restab" data-rt="headers">Headers</button>
+          <button class="restab" data-rt="tests" id="restab-tests">Tests</button>
+          <button class="restab" data-rt="console">Console</button>
         </div>
         <div class="respanel active" id="respanel-body">
           <div id="res-body-modes">
@@ -520,6 +583,12 @@ button{cursor:pointer;font-family:inherit}
         </div>
         <div class="respanel" id="respanel-headers">
           <div id="res-hdrs-panel"></div>
+        </div>
+        <div class="respanel" id="respanel-tests">
+          <div class="no-tests-msg" id="tests-empty-msg">No tests ran. Add test scripts in the Tests tab.</div>
+        </div>
+        <div class="respanel" id="respanel-console">
+          <div class="no-console-msg" id="console-empty-msg">No console output.</div>
         </div>
       </div>
     </div>
@@ -681,6 +750,44 @@ button{cursor:pointer;font-family:inherit}
     </div>
   </div>
 
+  <!-- Collection Runner modal -->
+  <div class="modal" id="modal-runner" style="display:none;max-width:600px">
+    <div class="modal-hdr"><span class="modal-title">Collection Runner</span><button class="modal-x" data-mc="runner">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Collection</label>
+        <select id="runner-coll"></select>
+      </div>
+      <div style="display:flex;gap:12px">
+        <div class="form-row" style="flex:1">
+          <label>Iterations</label>
+          <input type="number" id="runner-iter" value="1" min="1" max="1000">
+        </div>
+        <div class="form-row" style="flex:1">
+          <label>Delay between requests (ms)</label>
+          <input type="number" id="runner-delay" value="0" min="0" max="60000">
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Data file (CSV or JSON array) — optional</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-secondary" id="btn-runner-data-file" style="flex-shrink:0">Choose File</button>
+          <span id="runner-data-name" style="font-size:11.5px;color:var(--text-muted)">No file selected</span>
+          <input type="file" id="runner-data-input" accept=".csv,.json" style="display:none">
+        </div>
+      </div>
+      <div id="runner-progress-wrap" class="runner-progress-wrap" style="display:none">
+        <div id="runner-progress" class="runner-progress" style="width:0%"></div>
+      </div>
+      <div id="runner-summary" style="display:none"></div>
+      <div id="runner-results" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-mc="runner">Close</button>
+      <button class="btn-primary" id="btn-run-collection">Run</button>
+    </div>
+  </div>
+
   <div class="modal" id="modal-code" style="display:none;max-width:640px">
     <div class="modal-hdr"><span class="modal-title">Generate Code</span><button class="modal-x" data-mc="code">×</button></div>
     <div class="modal-body">
@@ -763,7 +870,8 @@ function mkReqState(o={}){
     apiKeyKey:'X-API-Key',apiKeyValue:'',apiKeyIn:'header'}, response:null, ...o };
 }
 function mkTab(o={}){
-  return { id:uid(), name:'New Request', dirty:false, collId:null, itemId:null, ...mkReqState(), ...o };
+  return { id:uid(), name:'New Request', dirty:false, collId:null, itemId:null,
+    preScript:'', testScript:'', testResults:null, consoleLogs:[], ...mkReqState(), ...o };
 }
 
 // ── Persist ──
@@ -876,6 +984,8 @@ function saveUIToTab(){
   tab.bodyMode = $q('input[name=bm]:checked')?.value || 'none';
   tab.bodyRaw  = $('body-raw').value;
   tab.bodyForm = getKV('body-form-kv');
+  tab.preScript = $('prescript-editor').value;
+  tab.testScript = $('tests-editor').value;
   tab.auth.type = $('auth-type').value;
   const af = $('auth-fields');
   tab.auth.bearer    = af.querySelector('#af-bearer')?.value || tab.auth.bearer;
@@ -903,10 +1013,12 @@ function loadTabToUI(tab){
   // auth
   $('auth-type').value = tab.auth?.type || 'none';
   renderAuth(tab.auth);
+  $('prescript-editor').value = tab.preScript || '';
+  $('tests-editor').value = tab.testScript || '';
   // response
   if(tab.response) showResponse(tab.response);
   else showEmpty();
-  // tab name in header area (future)
+  renderTestResults(tab);
   updateTabName(tab);
 }
 
@@ -1143,19 +1255,29 @@ function buildRequest(tab){
 }
 
 // ── Send ──
-async function sendRequest(){
-  saveUIToTab();
-  const tab=getActiveTab();
-  if(!tab||!tab.url.trim()){ toast('Enter a URL first','err'); return; }
+async function sendRequest(tab=null, extraEnv={}){
+  const isManual=!tab;
+  if(isManual){ saveUIToTab(); tab=getActiveTab(); }
+  if(!tab||!tab.url.trim()){ toast('Enter a URL first','err'); return null; }
+
+  // ── Pre-request script ──
+  const preLogs=[];
+  if(tab.preScript?.trim()){
+    const prePm=makePmShim(tab, null, preLogs, extraEnv);
+    runScript(tab.preScript, prePm);
+    // environment may have been mutated — re-read
+  }
 
   tab.loading=true;
-  const btn=$('btn-send');
-  const cancel=$('btn-cancel');
-  btn.disabled=true; btn.textContent='Sending…';
-  cancel.classList.add('show');
+  if(isManual){
+    const btn=$('btn-send');
+    const cancel=$('btn-cancel');
+    btn.disabled=true; btn.textContent='Sending…';
+    cancel.classList.add('show');
+  }
 
   const ctrl=new AbortController();
-  S.abortCtrl=ctrl;
+  if(isManual) S.abortCtrl=ctrl;
   const timeout=setTimeout(()=>ctrl.abort(), S.settings.timeout||30000);
 
   const t0=Date.now();
@@ -1192,15 +1314,31 @@ async function sendRequest(){
     }
   } finally {
     clearTimeout(timeout);
-    S.abortCtrl=null;
-    tab.loading=false;
-    btn.disabled=false; btn.textContent='Send';
-    cancel.classList.remove('show');
+    if(isManual){
+      S.abortCtrl=null;
+      tab.loading=false;
+      $('btn-send').disabled=false; $('btn-send').textContent='Send';
+      $('btn-cancel').classList.remove('show');
+    }
+  }
+
+  // ── Test script ──
+  const testLogs=[...preLogs];
+  const testResults=[];
+  if(tab.testScript?.trim()&&response){
+    const testPm=makePmShim(tab, response, testLogs, extraEnv, testResults);
+    runScript(tab.testScript, testPm);
   }
 
   tab.response=response;
-  autosaveTab();
-  showResponse(response);
+  tab.testResults=testResults;
+  tab.consoleLogs=testLogs;
+  if(isManual){
+    autosaveTab();
+    showResponse(response);
+    renderTestResults(tab);
+  }
+  return { response, testResults };
 }
 
 // ── Response Rendering ──
@@ -1914,7 +2052,7 @@ function hideCtx(){
 // ── Event Listeners ──
 function bindEvents(){
   // Send / Cancel
-  $('btn-send').onclick=sendRequest;
+  $('btn-send').onclick=()=>sendRequest();
   $('btn-cancel').onclick=()=>{ S.abortCtrl?.abort(); };
   document.addEventListener('keydown',e=>{
     if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){ e.preventDefault(); sendRequest(); }
@@ -2075,6 +2213,22 @@ function bindEvents(){
     navigator.clipboard.writeText($('code-output').textContent).then(()=>toast('Copied','ok'));
   };
 
+  // Script editors — mark dirty on edit
+  $('prescript-editor').addEventListener('input', debounce(markDirty, 400));
+  $('tests-editor').addEventListener('input', debounce(markDirty, 400));
+
+  // Collection Runner
+  $('btn-runner').onclick=openRunner;
+  $('btn-run-collection').onclick=runCollection;
+  $('btn-runner-data-file').onclick=()=>$('runner-data-input').click();
+  $('runner-data-input').onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{
+      _runnerData=await parseDataFile(f);
+      $('runner-data-name').textContent=`${f.name} (${_runnerData.length} row${_runnerData.length===1?'':'s'})`;
+    }catch(err){ toast('Failed to parse data file: '+err.message,'err'); }
+  };
+
   // Share
   $('btn-share-req').onclick=()=>openShareModal('request');
   $('share-use-passphrase').addEventListener('change',e=>{
@@ -2110,6 +2264,350 @@ function bindEvents(){
   // Modal close
   $a('[data-mc]').forEach(btn=>btn.addEventListener('click',closeModal));
   $('modal-overlay').addEventListener('click',e=>{ if(e.target===$('modal-overlay')) closeModal(); });
+}
+
+// ── Tier 4: Scripting, pm API, Tests, Collection Runner ──
+
+// ── pm.expect — Chai-compatible assertion chain ──
+function pmExpect(val){
+  function makeChain(v, neg){
+    const assert=(pass,msg,negMsg)=>{
+      const result=neg?!pass:pass;
+      if(!result) throw new Error(neg?(negMsg||'Expected: NOT '+msg):msg);
+    };
+    const words=['to','be','been','is','that','which','and','has','have','with','at','of','same','but','does','still'];
+    const chain=new Proxy({},{
+      get(_,prop){
+        if(words.includes(prop)) return chain;
+        if(prop==='not') return makeChain(v,!neg);
+        // property assertions (getters)
+        if(prop==='ok')        { assert(!!v,          `Expected ${JSON.stringify(v)} to be truthy`); return chain; }
+        if(prop==='true')      { assert(v===true,     `Expected ${JSON.stringify(v)} to be true`); return chain; }
+        if(prop==='false')     { assert(v===false,    `Expected ${JSON.stringify(v)} to be false`); return chain; }
+        if(prop==='null')      { assert(v===null,     `Expected ${JSON.stringify(v)} to be null`); return chain; }
+        if(prop==='undefined') { assert(v===undefined,`Expected ${JSON.stringify(v)} to be undefined`); return chain; }
+        if(prop==='empty'){
+          const emp=v===''||v?.length===0||(v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===0);
+          assert(emp,`Expected ${JSON.stringify(v)} to be empty`); return chain;
+        }
+        if(prop==='exist') { assert(v!=null,`Expected value to exist`); return chain; }
+        // method assertions
+        if(prop==='equal'||prop==='equals'||prop==='eq'){
+          return exp=>{ assert(v===exp,`Expected ${JSON.stringify(v)} to equal ${JSON.stringify(exp)}`); return chain; };
+        }
+        if(prop==='eql'||prop==='deep'||prop==='deepEqual'){
+          return exp=>{ assert(JSON.stringify(v)===JSON.stringify(exp),`Expected deep equality\n  actual:   ${JSON.stringify(v)}\n  expected: ${JSON.stringify(exp)}`); return chain; };
+        }
+        if(prop==='include'||prop==='includes'||prop==='contain'||prop==='contains'){
+          return sub=>{
+            const pass=typeof v==='string'?v.includes(sub):Array.isArray(v)?v.includes(sub):sub in (v||{});
+            assert(pass,`Expected ${JSON.stringify(v)} to include ${JSON.stringify(sub)}`); return chain;
+          };
+        }
+        if(prop==='property'||prop==='haveProperty'){
+          return (key,expected)=>{
+            assert(v!=null&&key in Object(v),`Expected object to have property '${key}'`);
+            if(expected!==undefined) assert(v[key]===expected,`Expected property '${key}' = ${JSON.stringify(v[key])} to equal ${JSON.stringify(expected)}`);
+            return makeChain(v?.[key],neg);
+          };
+        }
+        if(prop==='lengthOf'||prop==='length'){
+          return n=>{ assert(v?.length===n,`Expected length ${v?.length} to equal ${n}`); return chain; };
+        }
+        if(prop==='above'||prop==='gt'||prop==='greaterThan'){ return n=>{ assert(v>n, `Expected ${v} to be above ${n}`); return chain; }; }
+        if(prop==='below'||prop==='lt'||prop==='lessThan'){   return n=>{ assert(v<n, `Expected ${v} to be below ${n}`); return chain; }; }
+        if(prop==='least'||prop==='gte'){ return n=>{ assert(v>=n,`Expected ${v} to be at least ${n}`); return chain; }; }
+        if(prop==='most'||prop==='lte'){  return n=>{ assert(v<=n,`Expected ${v} to be at most ${n}`); return chain; }; }
+        if(prop==='within'){ return (lo,hi)=>{ assert(v>=lo&&v<=hi,`Expected ${v} to be within ${lo}..${hi}`); return chain; }; }
+        if(prop==='match'||prop==='matches'){ return re=>{ assert(re.test(String(v)),`Expected ${JSON.stringify(v)} to match ${re}`); return chain; }; }
+        if(prop==='oneOf'){ return arr=>{ assert(arr.includes(v),`Expected ${JSON.stringify(v)} to be one of ${JSON.stringify(arr)}`); return chain; }; }
+        if(prop==='keys'||prop==='key'){
+          return (...ks)=>{
+            const flat=ks.flat();
+            assert(flat.every(k=>k in Object(v)),`Expected object to have keys ${JSON.stringify(flat)}`);
+            return chain;
+          };
+        }
+        if(prop==='instanceof'){ return Cls=>{ assert(v instanceof Cls,`Expected value to be instance of ${Cls.name}`); return chain; }; }
+        if(prop==='a'||prop==='an'){
+          return type=>{
+            const actual=type==='array'?Array.isArray(v):type==='null'?v===null:typeof v===type;
+            assert(actual,`Expected ${JSON.stringify(v)} to be a ${type}`); return chain;
+          };
+        }
+        if(prop==='throw'){
+          return ()=>{ let threw=false; try{ v(); }catch{ threw=true; } assert(threw,'Expected function to throw'); return chain; };
+        }
+        return chain; // unknown — keep chaining
+      }
+    });
+    return chain;
+  }
+  return makeChain(val, false);
+}
+
+// ── Script sandbox ──
+function runScript(script, pm){
+  if(!script?.trim()) return;
+  const sandboxConsole={
+    log:  (...a)=>pm._logs.push({t:'log',  m:a.map(serialize).join(' ')}),
+    warn: (...a)=>pm._logs.push({t:'warn', m:a.map(serialize).join(' ')}),
+    error:(...a)=>pm._logs.push({t:'error',m:a.map(serialize).join(' ')}),
+    info: (...a)=>pm._logs.push({t:'info', m:a.map(serialize).join(' ')}),
+  };
+  try{
+    // eslint-disable-next-line no-new-func
+    new Function('pm','console',script)(pm, sandboxConsole);
+  }catch(e){
+    pm._logs.push({t:'error',m:'Script error: '+e.message});
+  }
+}
+function serialize(v){ try{ return typeof v==='object'?JSON.stringify(v,null,2):String(v); }catch{ return String(v); } }
+
+// ── pm shim factory ──
+function makePmShim(tab, response, logs=[], extraEnv={}, testResults=[]){
+  const getVar=k=>extraEnv[k]??S.globals[k]??getActiveEnvVars()[k]??getCollVar(tab.collId,k);
+  const setEnvK=(k,v)=>{ const env=S.environments.find(e=>e.id===S.activeEnvId); if(env){ const row=env.variables.find(r=>r.key===k); if(row) row.value=v; else env.variables.push({key:k,value:v,enabled:true}); saveEnvironments(); renderEnvEditor(); } };
+
+  const pm={
+    _logs:logs, _tests:testResults,
+    environment:{
+      get:k=>getActiveEnvVars()[k],
+      set:(k,v)=>setEnvK(k,v),
+      unset:k=>{ const env=S.environments.find(e=>e.id===S.activeEnvId); if(env) env.variables=env.variables.filter(r=>r.key!==k); saveEnvironments(); },
+      has:k=>k in getActiveEnvVars(),
+    },
+    globals:{
+      get:k=>S.globals[k],
+      set:(k,v)=>{ S.globals[k]=v; saveEnvironments(); },
+      unset:k=>{ delete S.globals[k]; saveEnvironments(); },
+      has:k=>k in S.globals,
+    },
+    collectionVariables:{
+      get:k=>getCollVar(tab.collId,k),
+      set:(k,v)=>setCollVar(tab.collId,k,v),
+      unset:k=>unsetCollVar(tab.collId,k),
+    },
+    variables:{ get:k=>getVar(k) },
+    request:{
+      method:tab.method,
+      url:{ raw:tab.url, toString:()=>tab.url },
+      headers:{ get:k=>(tab.headers||[]).find(h=>h.key.toLowerCase()===k.toLowerCase())?.value },
+      body:{ raw:tab.bodyRaw||'' },
+    },
+    response: response ? {
+      code:response.status,
+      status:response.statusText,
+      responseTime:response.time,
+      headers:{ get:k=>response.headers?.[k.toLowerCase()] },
+      json:()=>{ try{ return JSON.parse(response.body); }catch{ throw new Error('Response is not valid JSON'); } },
+      text:()=>response.body,
+      to:{ have:{ jsonBody:()=>{} } },
+    } : null,
+    test:(name,fn)=>{
+      try{ fn(); testResults.push({name,passed:true}); }
+      catch(e){ testResults.push({name,passed:false,error:e.message}); }
+    },
+    expect:pmExpect,
+    sendRequest:(opts,cb)=>{
+      const url=typeof opts==='string'?opts:opts.url;
+      const method=(opts.method||'GET').toUpperCase();
+      const headers=opts.header||opts.headers||{};
+      fetch(url,{method,headers}).then(async r=>{
+        const body=await r.text();
+        cb(null,{code:r.status,status:r.statusText,json:()=>JSON.parse(body),text:()=>body,headers:{get:k=>r.headers.get(k)}});
+      }).catch(e=>cb(e,null));
+    },
+  };
+  return pm;
+}
+
+// ── Collection variable helpers ──
+function getCollVar(collId,k){
+  const coll=S.collections.find(c=>c.id===collId);
+  return (coll?.variable||[]).find(v=>v.key===k)?.value;
+}
+function setCollVar(collId,k,v){
+  const coll=S.collections.find(c=>c.id===collId);
+  if(!coll) return;
+  coll.variable=coll.variable||[];
+  const row=coll.variable.find(r=>r.key===k);
+  if(row) row.value=v; else coll.variable.push({key:k,value:v,enabled:true});
+  saveCollections();
+}
+function unsetCollVar(collId,k){
+  const coll=S.collections.find(c=>c.id===collId);
+  if(coll) coll.variable=(coll.variable||[]).filter(r=>r.key!==k);
+  saveCollections();
+}
+
+// ── Render test results in response panel ──
+function renderTestResults(tab){
+  const panel=$('respanel-tests');
+  const conPanel=$('respanel-console');
+  const resTab=$('restab-tests');
+
+  const results=tab?.testResults||[];
+  const logs=tab?.consoleLogs||[];
+
+  // Update Tests tab badge
+  if(results.length){
+    const pass=results.filter(r=>r.passed).length;
+    const fail=results.length-pass;
+    resTab.innerHTML=`Tests <span class="badge ${fail?'badge-fail':'badge-pass'}">${pass}/${results.length}</span>`;
+  } else {
+    resTab.textContent='Tests';
+  }
+
+  // Tests panel
+  panel.innerHTML='';
+  if(!results.length){
+    panel.innerHTML='<div class="no-tests-msg">No tests ran. Add assertions in the Tests tab.</div>';
+  } else {
+    const pass=results.filter(r=>r.passed).length;
+    const fail=results.length-pass;
+    const summ=document.createElement('div');
+    summ.className='tests-summary';
+    summ.innerHTML=`<span class="tests-pass-count">✓ ${pass} passed</span>${fail?`<span class="tests-fail-count">✗ ${fail} failed</span>`:''}`;
+    panel.appendChild(summ);
+    results.forEach(r=>{
+      const row=document.createElement('div');
+      row.className='test-row '+(r.passed?'test-pass':'test-fail');
+      row.innerHTML=`<div class="test-icon">${r.passed?'✓':'✗'}</div>`
+        +`<div><div class="test-name">${esc(r.name)}</div>`
+        +`${r.error?`<div class="test-err">${esc(r.error)}</div>`:''}</div>`;
+      panel.appendChild(row);
+    });
+  }
+
+  // Console panel
+  conPanel.innerHTML='';
+  if(!logs.length){
+    conPanel.innerHTML='<div class="no-console-msg">No console output.</div>';
+  } else {
+    logs.forEach(entry=>{
+      const row=document.createElement('div');
+      row.className=`con-row con-${entry.t}`;
+      row.textContent=entry.m;
+      conPanel.appendChild(row);
+    });
+  }
+}
+
+// ── Collection Runner ──
+let _runnerData=[]; // parsed data rows
+
+function openRunner(){
+  const sel=$('runner-coll');
+  sel.innerHTML='';
+  S.collections.forEach(c=>{
+    const o=new Option(c.info?.name||'Collection',c.id);
+    sel.appendChild(o);
+  });
+  if(!S.collections.length){ toast('No collections to run','err'); return; }
+  $('runner-results').style.display='none';
+  $('runner-summary').style.display='none';
+  $('runner-progress-wrap').style.display='none';
+  $('runner-progress').style.width='0%';
+  $('btn-run-collection').disabled=false;
+  $('btn-run-collection').textContent='Run';
+  _runnerData=[];
+  $('runner-data-name').textContent='No file selected';
+  openModal('runner');
+}
+
+async function runCollection(){
+  const collId=$('runner-coll').value;
+  const coll=S.collections.find(c=>c.id===collId);
+  if(!coll){ toast('Collection not found','err'); return; }
+
+  const iterations=Math.max(1,+$('runner-iter').value||1);
+  const delay=Math.max(0,+$('runner-delay').value||0);
+  const dataRows=_runnerData.length?_runnerData:[{}];
+  const allRequests=flattenItems(coll.items||[]);
+  const total=allRequests.length*iterations*dataRows.length;
+
+  if(!allRequests.length){ toast('No requests in collection','err'); return; }
+
+  const btn=$('btn-run-collection');
+  btn.disabled=true; btn.textContent='Running…';
+  $('runner-results').innerHTML=''; $('runner-results').style.display='block';
+  $('runner-summary').style.display='none';
+  $('runner-progress-wrap').style.display='block';
+  $('runner-progress').style.width='0%';
+
+  let done=0, totalPass=0, totalFail=0, totalErr=0;
+  const results=[];
+
+  for(let iter=0;iter<iterations;iter++){
+    for(const dataRow of dataRows){
+      for(const item of allRequests){
+        const fakeTab=mkTab({...item,collId,preScript:item.preScript||'',testScript:item.testScript||''});
+        let runResult=null;
+        try{
+          runResult=await sendRequest(fakeTab, dataRow);
+        }catch{}
+        const res=runResult?.response;
+        const tests=runResult?.testResults||[];
+        const pass=tests.filter(t=>t.passed).length;
+        const fail=tests.length-pass;
+        if(res&&res.status===0) totalErr++;
+        totalPass+=pass; totalFail+=fail;
+        results.push({name:item.name,method:item.method,res,tests,pass,fail});
+        // render row
+        const row=document.createElement('div');
+        row.className='runner-row';
+        const stClass=res?.status>=500?'st-4xx':res?.status>=400?'st-4xx':res?.status>=300?'st-3xx':res?.status>=200?'st-2xx':'';
+        row.innerHTML=`<span class="method-tag m-${item.method||'GET'}">${item.method||'GET'}</span>`
+          +`<span class="runner-req-name">${esc(item.name)}</span>`
+          +`<span class="runner-status ${stClass}">${res?.status||'ERR'}</span>`
+          +`<span class="runner-time">${fmtMs(res?.time||0)}</span>`
+          +`<span class="runner-tests" style="color:${fail?'var(--s4xx)':'var(--s2xx)'}">`
+          +`${tests.length?`${pass}/${tests.length}`:'—'}</span>`;
+        $('runner-results').appendChild(row);
+        done++;
+        $('runner-progress').style.width=(done/total*100)+'%';
+        if(delay>0) await new Promise(r=>setTimeout(r,delay));
+      }
+    }
+  }
+
+  // Summary
+  const summ=$('runner-summary');
+  summ.style.display='flex';
+  summ.innerHTML=`<span>${done} requests</span>`
+    +`<span class="tests-pass-count">✓ ${totalPass} tests passed</span>`
+    +`${totalFail?`<span class="tests-fail-count">✗ ${totalFail} tests failed</span>`:''}`
+    +`${totalErr?`<span style="color:var(--s4xx)">${totalErr} errors</span>`:''}`;
+  $('runner-progress').style.width='100%';
+  btn.disabled=false; btn.textContent='Run Again';
+}
+
+function flattenItems(items){
+  const out=[];
+  (items||[]).forEach(it=>{
+    if(it.type==='folder') out.push(...flattenItems(it.items));
+    else out.push(it);
+  });
+  return out;
+}
+
+async function parseDataFile(file){
+  const text=await file.text();
+  if(file.name.endsWith('.json')){
+    const parsed=JSON.parse(text);
+    return Array.isArray(parsed)?parsed:[parsed];
+  }
+  // CSV
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length<2) return [{}];
+  const headers=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(line=>{
+    const vals=line.split(',');
+    const row={};
+    headers.forEach((h,i)=>row[h]=(vals[i]||'').trim().replace(/^"|"$/g,''));
+    return row;
+  });
 }
 
 // ── Tier 3: Encrypted Link Sharing ──
