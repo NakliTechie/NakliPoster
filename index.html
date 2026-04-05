@@ -507,6 +507,7 @@ button{cursor:pointer;font-family:inherit}
       <span class="logo">NakliPoster</span>
       <button class="icon-btn" id="btn-import-open" title="Import">↓</button>
       <button class="icon-btn" id="btn-settings-open" title="Settings">⚙</button>
+      <button class="icon-btn" id="btn-help-open" title="Help">?</button>
     </div>
     <div id="sidebar-nav">
       <button class="snav-btn active" data-p="collections">Collections</button>
@@ -2493,7 +2494,7 @@ function bindEvents(){
 
   // Settings
   $('btn-settings-open').onclick=$('btn-settings-sb').onclick=openSettingsModal;
-  $('btn-help-sb').onclick=()=>openHelpModal();
+  $('btn-help-open').onclick=$('btn-help-sb').onclick=()=>openHelpModal();
   $('btn-save-settings').onclick=saveSettings;
 
   // Import
