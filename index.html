@@ -229,6 +229,11 @@ button{cursor:pointer;font-family:inherit}
 #res-actions button{background:none;border:1px solid var(--border);color:var(--text-secondary);
   padding:3px 9px;border-radius:4px;font-size:11px}
 #res-actions button:hover{border-color:var(--accent);color:var(--accent)}
+#btn-diagnose-ai{border-color:var(--accent);color:var(--accent)}
+.test-fix-btn{background:none;border:1px solid var(--accent);color:var(--accent);
+  font-size:10px;padding:1px 6px;border-radius:3px;cursor:pointer;flex-shrink:0;
+  margin-left:auto;white-space:nowrap}
+.test-fix-btn:hover{background:var(--accent);color:#fff}
 #res-tabs{display:flex;padding:0 10px;border-bottom:1px solid var(--border);flex-shrink:0}
 .restab{padding:6px 10px;background:none;border:none;border-bottom:2px solid transparent;
   color:var(--text-secondary);font-size:11.5px;font-weight:500;transition:.1s}
@@ -1710,6 +1715,27 @@ function showResponse(r){
   $('res-time-txt').textContent=fmtMs(r.time||0);
   $('res-size-txt').textContent=fmtBytes(r.size||0);
 
+  // Inline AI: Diagnose button for error responses
+  let diagBtn=$('btn-diagnose-ai');
+  if(r.status>=400||r.error){
+    if(!diagBtn){
+      diagBtn=document.createElement('button');
+      diagBtn.id='btn-diagnose-ai';
+      diagBtn.title='Ask AI to diagnose this error';
+      diagBtn.textContent='✦ Diagnose';
+      diagBtn.onclick=()=>{
+        if($('ai-panel').classList.contains('collapsed')) toggleAIPanel();
+        const resp=getActiveTab()?.response;
+        const status=resp?.status||'error';
+        aiSend(`The request returned ${status}${resp?.statusText?' '+resp.statusText:''}. What's wrong and how do I fix it?`);
+      };
+      $('res-actions').prepend(diagBtn);
+    }
+    diagBtn.style.display='';
+  } else if(diagBtn){
+    diagBtn.style.display='none';
+  }
+
   _rawResponseBody=r.body||'';
   renderResBody(_currentResMode, r);
 
@@ -1881,7 +1907,10 @@ function renderItems(items, container, coll, filter){
       rd.className='coll-row';
       rd.innerHTML=`<span class="method-tag m-${item.method||'GET'}">${item.method||'GET'}</span>`
         +`<span class="coll-name">${esc(item.name)}</span>`
-        +`<span class="coll-acts"><button class="coll-act danger" data-act="del-item" data-cid="${coll.id}" data-iid="${item.id}">✕</button></span>`;
+        +`<span class="coll-acts">`
+        +`<button class="coll-act" data-act="doc-ai" data-cid="${coll.id}" data-iid="${item.id}" title="Document with AI">✦</button>`
+        +`<button class="coll-act danger" data-act="del-item" data-cid="${coll.id}" data-iid="${item.id}">✕</button>`
+        +`</span>`;
       rd.onclick=e=>{ if(e.target.closest('.coll-act')) return; openCollItem(item); };
       rd.querySelectorAll('.coll-act').forEach(btn=>btn.onclick=e=>{ e.stopPropagation(); handleCollAct(btn); });
       container.appendChild(rd);
@@ -1912,6 +1941,15 @@ function handleCollAct(btn){
     saveCollections();
     saveCollToFS(coll);
     renderCollectionTree();
+  } else if(act==='doc-ai'){
+    const coll=S.collections.find(c=>c.id===cid);
+    if(!coll) return;
+    const findItem=(items)=>{ for(const it of items){ if(it.id===iid) return it; if(it.items){ const f=findItem(it.items); if(f) return f; } } return null; };
+    const item=findItem(coll.items||[]);
+    if(!item) return;
+    if($('ai-panel').classList.contains('collapsed')) toggleAIPanel();
+    const hdrs=(item.headers||[]).filter(h=>h.k&&h.enabled!==false).map(h=>`${h.k}: ${h.v}`).join(', ');
+    aiSend(`Write concise API documentation for this endpoint:\n\nMethod: ${item.method||'GET'}\nURL: ${item.url||''}\n${hdrs?'Headers: '+hdrs+'\n':''}${item.bodyRaw?'Body: '+item.bodyRaw.slice(0,400)+'\n':''}\nInclude: description, parameters, authentication, example request, and expected response.`);
   }
 }
 function openCollItem(item){
@@ -2821,8 +2859,20 @@ function renderTestResults(tab){
       const row=document.createElement('div');
       row.className='test-row '+(r.passed?'test-pass':'test-fail');
       row.innerHTML=`<div class="test-icon">${r.passed?'✓':'✗'}</div>`
-        +`<div><div class="test-name">${esc(r.name)}</div>`
+        +`<div style="flex:1"><div class="test-name">${esc(r.name)}</div>`
         +`${r.error?`<div class="test-err">${esc(r.error)}</div>`:''}</div>`;
+      if(!r.passed){
+        const fixBtn=document.createElement('button');
+        fixBtn.className='test-fix-btn';
+        fixBtn.textContent='✦ Fix';
+        fixBtn.title='Ask AI to fix this test';
+        fixBtn.onclick=()=>{
+          const script=getActiveTab()?.testScript||'';
+          if($('ai-panel').classList.contains('collapsed')) toggleAIPanel();
+          aiSend(`Fix the failing test "${r.name}" (error: ${r.error||'unknown'}). Here is the current test script:\n\n${script}`);
+        };
+        row.appendChild(fixBtn);
+      }
       panel.appendChild(row);
     });
   }
