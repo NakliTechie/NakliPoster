@@ -964,6 +964,7 @@ button{cursor:pointer;font-family:inherit}
       <button class="help-tab" data-ht="2">Environments</button>
       <button class="help-tab" data-ht="3">Scripts &amp; Tests</button>
       <button class="help-tab" data-ht="4">Sharing</button>
+      <button class="help-tab" data-ht="5">AI Assistant</button>
     </div>
 
     <!-- Tab 0: Getting Started -->
@@ -1002,10 +1003,12 @@ button{cursor:pointer;font-family:inherit}
       <h3>What is a collection?</h3>
       <p>A collection is a group of saved requests, stored as a <code>.json</code> file on your disk in Postman v2.1 format. You can open them in Postman, commit them to git, or share them with your team.</p>
       <h3>Opening a workspace</h3>
+      <div class="help-note">NakliPoster will ask for read/write access to the folder you pick. This is a standard browser file system permission — granted once per folder, per browser. No data leaves your machine. Collections, settings, and environments are stored as plain text files you own.</div>
       <ul>
         <li>Click <strong>Open Folder</strong> in the sidebar to pick a directory via your browser's file picker.</li>
+        <li>Your browser will show a permission prompt — click <strong>Allow</strong> (or <strong>Edit files</strong> in Chrome).</li>
         <li>NakliPoster reads all <code>.json</code> collections from that folder and shows them in the sidebar.</li>
-        <li>Changes are autosaved to disk — no save button needed.</li>
+        <li>Changes are autosaved to disk — no save button needed. The files are plain JSON, git-trackable and portable.</li>
       </ul>
       <h3>Saving a request</h3>
       <ul>
@@ -1096,6 +1099,39 @@ button{cursor:pointer;font-family:inherit}
         <li>If the link is encrypted, you'll be prompted for the passphrase first.</li>
       </ul>
       <div class="help-note">Secret-tagged environment variables are excluded from shared links by default. You can opt in to include them if you trust the recipient and the channel.</div>
+    </div>
+
+    <!-- Tab 5: AI Assistant -->
+    <div class="help-pane" id="help-pane-5">
+      <h3>Two modes — no account required for either</h3>
+      <ul>
+        <li><strong>Local (WebGPU)</strong> — runs entirely in your browser using your GPU. The model downloads once (~1–4 GB depending on your choice) and is cached. No API key, no cloud, no usage limits.</li>
+        <li><strong>API mode</strong> — connects to any OpenAI-compatible endpoint: OpenRouter, OpenAI, Groq, LM Studio (local), or Ollama (local). Enter a base URL and API key (leave blank for LM Studio / Ollama).</li>
+      </ul>
+      <h3>Loading a local model</h3>
+      <ul>
+        <li>Open the AI panel with <strong>AI ✦</strong> in the status bar.</li>
+        <li>Pick a model from the dropdown. <strong>Gemma 4 E2B (~2 GB)</strong> is the default — good balance of speed and quality.</li>
+        <li>Click <strong>Load Model</strong>. The first load downloads from Hugging Face and caches in your browser. Subsequent loads are instant.</li>
+        <li>The settings section collapses automatically once the model is ready.</li>
+      </ul>
+      <h3>What the AI knows</h3>
+      <p>Every message automatically includes the context of your current work:</p>
+      <ul>
+        <li>The open request — method, URL, headers, body, auth type</li>
+        <li>The last response — status code, body (up to 2000 chars), timing</li>
+        <li>Active environment name and non-secret variable values</li>
+      </ul>
+      <h3>Quick actions</h3>
+      <ul>
+        <li><strong>Diagnose</strong> — ask what's wrong with the current response and how to fix it.</li>
+        <li><strong>Write Tests</strong> — generate a <code>pm.test()</code> script for the current response.</li>
+        <li><strong>Explain</strong> — plain-English explanation of the response data.</li>
+        <li><strong>Document</strong> — generate endpoint documentation (method, params, example response).</li>
+      </ul>
+      <h3>Inserting generated scripts</h3>
+      <p>When the AI outputs code that looks like a test script, two buttons appear below the response: <strong>→ Tests</strong> and <strong>→ Pre-req</strong>. Click either to paste the script directly into that tab — no copy-paste needed.</p>
+      <div class="help-note">Nothing is sent to any server in local mode. In API mode, your request context is sent to whichever API endpoint you configure — treat it like any other API call.</div>
     </div>
 
     <div class="modal-footer">
@@ -3644,8 +3680,8 @@ function init(){
   initResize();
   bindAIEvents();
 
-  // Restore AI panel state
-  if(lsGet(LS_AI_OPEN,false)) toggleAIPanel();
+  // Restore AI panel state (open by default)
+  if(lsGet(LS_AI_OPEN,true)) toggleAIPanel();
   const lastAIModel=localStorage.getItem(LS_AI_MODEL);
   if(lastAIModel&&AI_MODELS[lastAIModel]) $('ai-model-id').value=lastAIModel;
 
