@@ -295,6 +295,30 @@ button{cursor:pointer;font-family:inherit}
   border-radius:3px;padding:1px 6px;font-size:11px;color:var(--text-primary)}
 .help-pane .help-note{background:var(--bg-hover);border-left:3px solid var(--accent);
   border-radius:0 4px 4px 0;padding:8px 12px;margin:10px 0;font-size:12px;color:var(--text-secondary)}
+/* ── Cookie Manager ── */
+#cookie-toolbar{padding:7px 10px;display:flex;gap:6px;align-items:center;border-bottom:1px solid var(--border)}
+#cookie-list{flex:1;overflow-y:auto}
+#no-cookies{padding:20px 14px;text-align:center;color:var(--text-muted);font-size:12px;display:flex;flex-direction:column;gap:8px}
+.cookie-row{display:flex;align-items:center;gap:7px;padding:5px 10px;border-bottom:1px solid var(--border);font-size:12px}
+.cookie-row:hover{background:var(--bg-hover)}
+.cookie-domain{color:var(--text-muted);font-size:10.5px;flex-shrink:0;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cookie-name{font-weight:600;flex-shrink:0;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cookie-val{flex:1;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-mono);font-size:11px}
+.cookie-toggle{accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.cookie-del{background:none;border:none;color:var(--text-muted);padding:1px 4px;cursor:pointer;border-radius:3px;font-size:11px;flex-shrink:0}
+.cookie-del:hover{color:var(--s4xx)}
+/* cookie add form */
+#cookie-add-form{padding:10px;border-top:1px solid var(--border);display:none;flex-direction:column;gap:5px;flex-shrink:0}
+#cookie-add-form input{background:var(--bg-input);border:1px solid var(--border);border-radius:4px;color:var(--text-primary);padding:4px 7px;font-size:12px;outline:none;width:100%}
+#cookie-add-form input:focus{border-color:var(--accent)}
+.cookie-form-row{display:flex;gap:5px}
+/* ── Git History Modal ── */
+.gh-commit{display:flex;align-items:flex-start;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);cursor:pointer}
+.gh-commit:hover{background:var(--bg-hover)}
+.gh-sha{font-family:var(--font-mono);font-size:10.5px;color:var(--accent);flex-shrink:0;width:52px}
+.gh-msg{flex:1;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gh-date{font-size:10.5px;color:var(--text-muted);flex-shrink:0}
+.gh-author{font-size:10.5px;color:var(--text-muted);flex-shrink:0;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ── Global Search ── */
 .sr-group{padding:4px 12px 2px;font-size:10px;font-weight:700;text-transform:uppercase;
   letter-spacing:.6px;color:var(--text-muted)}
@@ -548,7 +572,8 @@ mark{background:transparent;color:var(--accent);font-weight:600}
     <div id="sidebar-nav">
       <button class="snav-btn active" data-p="collections">Collections</button>
       <button class="snav-btn" data-p="history">History</button>
-      <button class="snav-btn" data-p="environments">Environments</button>
+      <button class="snav-btn" data-p="environments">Envs</button>
+      <button class="snav-btn" data-p="cookies">Cookies</button>
     </div>
 
     <!-- Collections -->
@@ -590,6 +615,32 @@ mark{background:transparent;color:var(--accent);font-weight:600}
         <div class="env-section-label">Globals</div>
         <div class="kv-wrap" id="globals-kv"></div>
         <button class="add-row-btn" id="btn-add-global">+ Add Global</button>
+      </div>
+    </div>
+    <!-- Cookies -->
+    <div class="s-panel" id="panel-cookies">
+      <div id="cookie-toolbar">
+        <span style="flex:1;font-size:11px;color:var(--text-muted)">Auto-sent when domain matches URL</span>
+        <button class="icon-btn" id="btn-add-cookie" title="Add cookie" style="font-size:18px;font-weight:300">+</button>
+      </div>
+      <div id="cookie-list"></div>
+      <div id="no-cookies">
+        <p>No cookies yet.</p>
+        <p style="font-size:11px;color:var(--text-muted)">Cookies matching the request hostname are sent automatically as a <code>Cookie</code> header.</p>
+        <button class="btn-primary" id="btn-add-cookie-2" style="font-size:11px;padding:4px 12px">+ Add Cookie</button>
+      </div>
+      <div id="cookie-add-form">
+        <div class="cookie-form-row">
+          <input id="ck-domain" placeholder="domain (e.g. api.example.com)" style="flex:1">
+        </div>
+        <div class="cookie-form-row">
+          <input id="ck-name" placeholder="name" style="flex:1">
+          <input id="ck-value" placeholder="value" style="flex:2">
+        </div>
+        <div class="cookie-form-row" style="justify-content:flex-end;gap:6px">
+          <button class="btn-secondary" id="btn-ck-cancel" style="font-size:11px;padding:3px 10px">Cancel</button>
+          <button class="btn-primary" id="btn-ck-save" style="font-size:11px;padding:3px 10px">Add</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1207,6 +1258,29 @@ mark{background:transparent;color:var(--accent);font-weight:600}
     </div>
   </div>
 
+  <!-- Git History -->
+  <div class="modal" id="modal-git-hist" style="display:none;max-width:620px">
+    <div class="modal-hdr">
+      <span class="modal-title">Git History — <span id="gh-coll-name"></span></span>
+      <button class="modal-x" data-mc="git-hist">×</button>
+    </div>
+    <div class="modal-body" style="padding:0;min-height:200px">
+      <div id="gh-status" style="padding:18px;color:var(--text-muted);font-size:12.5px">Loading…</div>
+      <div id="gh-commits" style="overflow-y:auto;max-height:360px"></div>
+      <div id="gh-restore-wrap" style="display:none">
+        <div style="padding:8px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <span id="gh-preview-label" style="flex:1;font-size:11.5px;color:var(--text-muted)"></span>
+          <button class="btn-secondary" id="btn-gh-back" style="font-size:11px;padding:3px 10px">← Back</button>
+          <button class="btn-primary" id="btn-gh-restore" style="font-size:11px;padding:3px 10px">Restore</button>
+        </div>
+        <pre id="gh-preview-pre" style="overflow:auto;max-height:300px;margin:0;padding:12px 18px;font-family:var(--font-mono);font-size:11px;color:var(--text-primary);background:var(--bg-app);border-top:1px solid var(--border)"></pre>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-mc="git-hist">Close</button>
+    </div>
+  </div>
+
 </div>
 
 <div class="ctx" id="ctx-menu" style="display:none"></div>
@@ -1226,6 +1300,7 @@ const LS = {
   activeEnv:   'np_active_env',
   reqH:        'np_req_h',
   sidebarW:    'np_sidebar_w',
+  cookies:     'np_cookies',
 };
 const MAX_HIST = 500;
 
@@ -1261,6 +1336,7 @@ const S = {
   dirHandle: null,
   abortCtrl: null,
   history: [],
+  cookies: [],
   settings: { theme:'dark', fontSize:13, jsonIndent:2, timeout:30000, followRedirects:true },
 };
 
@@ -1639,6 +1715,15 @@ function buildRequest(tab){
   } else if(auth.type==='apikey'&&auth.apiKeyValue){
     if(auth.apiKeyIn==='header') headers[auth.apiKeyKey]=resolveVars(auth.apiKeyValue);
   }
+  // Cookie injection
+  try {
+    const host=new URL(resolveVars(tab.url||'')).hostname;
+    const matching=(S.cookies||[]).filter(c=>c.enabled&&host===c.domain||host.endsWith('.'+c.domain));
+    if(matching.length){
+      const ckStr=matching.map(c=>`${c.name}=${c.value}`).join('; ');
+      headers['Cookie']=headers['Cookie']?headers['Cookie']+'; '+ckStr:ckStr;
+    }
+  } catch{}
   // Body
   let body=undefined;
   const bm=tab.bodyMode||'none';
@@ -1927,6 +2012,7 @@ function renderCollectionTree(filter=''){
       +`<button class="coll-act" data-act="add-req" data-cid="${coll.id}" title="Add request">+</button>`
       +`<button class="coll-act" data-act="share-coll" data-cid="${coll.id}" title="Share collection">⤴</button>`
       +`<button class="coll-act" data-act="export" data-cid="${coll.id}" title="Export">↓</button>`
+      +(S.dirHandle?`<button class="coll-act" data-act="git-hist" data-cid="${coll.id}" title="Git history">⎇</button>`:'')
       +`<button class="coll-act danger" data-act="del-coll" data-cid="${coll.id}" title="Delete">✕</button>`
       +`</span>`;
     ch.onclick=e=>{
@@ -2005,6 +2091,8 @@ function handleCollAct(btn){
     saveCollections();
     saveCollToFS(coll);
     renderCollectionTree();
+  } else if(act==='git-hist'){
+    openGitHistory(cid);
   } else if(act==='doc-ai'){
     const coll=S.collections.find(c=>c.id===cid);
     if(!coll) return;
@@ -3764,6 +3852,7 @@ function init(){
   loadHistory();
   loadCollections();
   loadEnvironments();
+  S.cookies=lsGet(LS.cookies,[]);
 
   // Restore layout
   const savedReqH=lsGet(LS.reqH, 280);
@@ -3791,6 +3880,7 @@ function init(){
   renderCollectionTree();
   renderEnvSelect();
   renderEnvEditor();
+  renderCookies();
   bindEvents();
   initResize();
   bindAIEvents();
@@ -4051,6 +4141,220 @@ function onMethodChange(){
     if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();wsSend();}
   });
 })();
+
+// ── Cookie Manager ──
+function saveCookies(){ lsSet(LS.cookies, S.cookies); }
+
+function renderCookies(){
+  const list=$('cookie-list');
+  const none=$('no-cookies');
+  const form=$('cookie-add-form');
+  if(!S.cookies.length){ list.innerHTML=''; none.style.display='flex'; none.style.flexDirection='column'; none.style.alignItems='center'; return; }
+  none.style.display='none';
+  list.innerHTML='';
+  S.cookies.forEach(c=>{
+    const row=document.createElement('div');
+    row.className='cookie-row';
+    row.innerHTML=`<input type="checkbox" class="cookie-toggle" ${c.enabled?'checked':''} title="Enable/disable">`
+      +`<span class="cookie-domain" title="${esc(c.domain)}">${esc(c.domain)}</span>`
+      +`<span class="cookie-name" title="${esc(c.name)}">${esc(c.name)}</span>`
+      +`<span class="cookie-val" title="${esc(c.value)}">${esc(c.value)}</span>`
+      +`<button class="cookie-del" title="Delete">✕</button>`;
+    row.querySelector('.cookie-toggle').addEventListener('change',e=>{
+      c.enabled=e.target.checked; saveCookies();
+    });
+    row.querySelector('.cookie-del').addEventListener('click',()=>{
+      S.cookies=S.cookies.filter(x=>x.id!==c.id);
+      saveCookies(); renderCookies();
+    });
+    list.appendChild(row);
+  });
+}
+
+function openCookieAddForm(){
+  const form=$('cookie-add-form');
+  form.style.display='flex';
+  $('ck-domain').value=''; $('ck-name').value=''; $('ck-value').value='';
+  $('ck-domain').focus();
+}
+
+function closeCookieAddForm(){
+  $('cookie-add-form').style.display='none';
+}
+
+function submitCookieAdd(){
+  const domain=$('ck-domain').value.trim().replace(/^https?:\/\//,'').replace(/\/.*/,'');
+  const name=$('ck-name').value.trim();
+  const value=$('ck-value').value.trim();
+  if(!domain||!name){ toast('Domain and name are required','err'); return; }
+  S.cookies.push({ id:uid(), domain, name, value, enabled:true });
+  saveCookies(); renderCookies(); closeCookieAddForm();
+}
+
+(function bindCookies(){
+  $('btn-add-cookie').onclick=openCookieAddForm;
+  $('btn-add-cookie-2').onclick=openCookieAddForm;
+  $('btn-ck-cancel').onclick=closeCookieAddForm;
+  $('btn-ck-save').onclick=submitCookieAdd;
+  $('ck-value').addEventListener('keydown',e=>{ if(e.key==='Enter') submitCookieAdd(); });
+})();
+
+// ── Git History ──
+let gitLib=null;
+
+function loadIsomorphicGit(){
+  if(gitLib) return Promise.resolve(gitLib);
+  return new Promise(resolve=>{
+    if(window.git){ gitLib=window.git; resolve(gitLib); return; }
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/isomorphic-git@1/index.umd.min.js';
+    s.onload=()=>{ gitLib=window.git; resolve(gitLib); };
+    s.onerror=()=>resolve(null);
+    document.head.appendChild(s);
+  });
+}
+
+function makeGitFs(){
+  // Minimal read-only FS adapter bridging File System Access API → isomorphic-git
+  async function getParentAndName(path){
+    const parts=path.replace(/^\/+/,'').split('/').filter(Boolean);
+    if(!parts.length) return { parent:S.dirHandle, name:'' };
+    let handle=S.dirHandle;
+    for(let i=0;i<parts.length-1;i++){
+      try{ handle=await handle.getDirectoryHandle(parts[i]); }
+      catch{ throw Object.assign(new Error(`ENOENT: ${path}`),{code:'ENOENT'}); }
+    }
+    return { parent:handle, name:parts[parts.length-1] };
+  }
+  return {
+    promises:{
+      async readFile(path, opts){
+        const {parent,name}=await getParentAndName(path);
+        try{
+          const fh=await parent.getFileHandle(name);
+          const file=await fh.getFile();
+          if(opts?.encoding==='utf8'||opts==='utf8') return file.text();
+          return new Uint8Array(await file.arrayBuffer());
+        } catch(e){ throw Object.assign(new Error(`ENOENT: ${path}`),{code:'ENOENT'}); }
+      },
+      async readdir(path){
+        const parts=path.replace(/^\/+/,'').split('/').filter(Boolean);
+        let handle=S.dirHandle;
+        for(const p of parts){
+          try{ handle=await handle.getDirectoryHandle(p); }
+          catch{ throw Object.assign(new Error(`ENOENT: ${path}`),{code:'ENOENT'}); }
+        }
+        const names=[];
+        for await(const [name] of handle.entries()) names.push(name);
+        return names;
+      },
+      async stat(path){
+        if(!path||path==='/'||path==='.') return {type:'dir',mode:0o40755,size:0,ino:0,mtimeMs:Date.now(),ctimeMs:Date.now()};
+        const {parent,name}=await getParentAndName(path);
+        try{
+          const fh=await parent.getFileHandle(name);
+          const f=await fh.getFile();
+          return {type:'file',mode:0o100644,size:f.size,ino:0,mtimeMs:f.lastModified,ctimeMs:f.lastModified};
+        } catch{
+          try{
+            await parent.getDirectoryHandle(name);
+            return {type:'dir',mode:0o40755,size:0,ino:0,mtimeMs:Date.now(),ctimeMs:Date.now()};
+          } catch{ throw Object.assign(new Error(`ENOENT: ${path}`),{code:'ENOENT'}); }
+        }
+      },
+      async lstat(path){ return this.stat(path); },
+      async writeFile(){}, async unlink(){}, async mkdir(){}, async rmdir(){},
+      async symlink(){}, async readlink(){ throw Object.assign(new Error('ENOENT'),{code:'ENOENT'}); },
+    }
+  };
+}
+
+async function openGitHistory(collId){
+  const coll=S.collections.find(c=>c.id===collId);
+  if(!coll||!S.dirHandle){ toast('Open a workspace folder first','err'); return; }
+  $('gh-coll-name').textContent=coll.info?.name||'Collection';
+  $('gh-commits').innerHTML='';
+  $('gh-status').textContent='Loading git…';
+  $('gh-status').style.display='';
+  $('gh-commits').style.display='none';
+  $('gh-restore-wrap').style.display='none';
+  openModal('git-hist');
+
+  const git=await loadIsomorphicGit();
+  if(!git){ $('gh-status').textContent='Could not load isomorphic-git. Check your connection.'; return; }
+
+  const fs=makeGitFs();
+  const filename=sanitizeFilename(coll.info?.name||'collection')+'.json';
+  let commits=[];
+  try{
+    commits=await git.log({ fs, dir:'/', filepath:filename, depth:50 });
+  } catch(e){
+    // filepath filter may fail if file not tracked — try without filter
+    try{ commits=await git.log({ fs, dir:'/', depth:50 }); }
+    catch(e2){
+      $('gh-status').textContent=`No git repository found in workspace: ${e2.message}`;
+      return;
+    }
+  }
+
+  if(!commits.length){ $('gh-status').textContent='No commits found. Have you run git commit in this folder?'; return; }
+
+  $('gh-status').style.display='none';
+  $('gh-commits').style.display='';
+  const el=$('gh-commits');
+  commits.forEach(c=>{
+    const row=document.createElement('div');
+    row.className='gh-commit';
+    const date=new Date(c.commit.author.timestamp*1000).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'});
+    row.innerHTML=`<span class="gh-sha">${c.oid.slice(0,7)}</span>`
+      +`<span class="gh-msg">${esc(c.commit.message.split('\n')[0])}</span>`
+      +`<span class="gh-author">${esc(c.commit.author.name)}</span>`
+      +`<span class="gh-date">${date}</span>`;
+    row.addEventListener('click',()=>showGitVersion(git,fs,c,filename,coll));
+    el.appendChild(row);
+  });
+}
+
+async function showGitVersion(git, fs, commit, filename, coll){
+  $('gh-commits').style.display='none';
+  $('gh-restore-wrap').style.display='';
+  $('gh-preview-pre').textContent='Loading…';
+  const date=new Date(commit.commit.author.timestamp*1000).toLocaleString();
+  $('gh-preview-label').textContent=`${commit.oid.slice(0,7)} — ${commit.commit.message.split('\n')[0]} — ${date}`;
+
+  let content='';
+  try{
+    const {blob}=await git.readBlob({ fs, dir:'/', oid:commit.oid, filepath:filename });
+    content=new TextDecoder().decode(blob);
+  } catch{
+    $('gh-preview-pre').textContent='(File not found in this commit)';
+    $('btn-gh-restore').disabled=true;
+    return;
+  }
+  $('btn-gh-restore').disabled=false;
+
+  // Pretty-print if valid JSON
+  try{ content=JSON.stringify(JSON.parse(content),null,2); } catch{}
+  $('gh-preview-pre').textContent=content;
+
+  $('btn-gh-back').onclick=()=>{
+    $('gh-restore-wrap').style.display='none';
+    $('gh-commits').style.display='';
+  };
+  $('btn-gh-restore').onclick=async ()=>{
+    try{
+      const parsed=JSON.parse(content);
+      // Merge ID so we don't orphan existing tabs
+      parsed.id=coll.id;
+      Object.assign(coll, parsed);
+      saveCollections();
+      await saveCollToFS(coll);
+      renderCollectionTree();
+      toast(`Restored to ${commit.oid.slice(0,7)}`,'ok');
+      closeModal();
+    } catch(e){ toast('Failed to restore: '+e.message,'err'); }
+  };
+}
 
 function loadShareLibs(){
   return new Promise(resolve=>{
