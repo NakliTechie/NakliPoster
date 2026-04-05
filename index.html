@@ -272,6 +272,24 @@ button{cursor:pointer;font-family:inherit}
 .modal-title{font-size:14px;font-weight:600;flex:1}
 .modal-x{background:none;border:none;color:var(--text-secondary);font-size:18px;padding:0 4px;line-height:1}
 .modal-x:hover{color:var(--text-primary)}
+/* Help modal */
+.help-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 18px;flex-shrink:0}
+.help-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-secondary);
+  padding:8px 12px;font-size:12px;cursor:pointer;margin-bottom:-1px;white-space:nowrap}
+.help-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.help-tab:hover:not(.active){color:var(--text-primary)}
+.help-pane{display:none;padding:18px;overflow-y:auto;flex:1}
+.help-pane.active{display:block}
+.help-pane h3{font-size:13px;font-weight:600;color:var(--text-primary);margin:0 0 10px}
+.help-pane h3:not(:first-child){margin-top:20px}
+.help-pane p,.help-pane li{font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin:4px 0}
+.help-pane ul{margin:6px 0;padding-left:18px}
+.help-pane code{background:var(--bg-hover);border:1px solid var(--border);border-radius:3px;
+  padding:1px 5px;font-family:inherit;font-size:11.5px;color:var(--text-primary)}
+.help-pane .help-kbd{display:inline-block;background:var(--bg-hover);border:1px solid var(--border);
+  border-radius:3px;padding:1px 6px;font-size:11px;color:var(--text-primary)}
+.help-pane .help-note{background:var(--bg-hover);border-left:3px solid var(--accent);
+  border-radius:0 4px 4px 0;padding:8px 12px;margin:10px 0;font-size:12px;color:var(--text-secondary)}
 .modal-body{padding:18px;flex:1;overflow-y:auto}
 .modal-footer{padding:10px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
 .form-row{margin-bottom:13px}
@@ -601,6 +619,7 @@ button{cursor:pointer;font-family:inherit}
   <div id="sb-right">
     <select id="env-quick"><option value="">No Environment</option></select>
     <button class="sb-btn" id="btn-settings-sb">Settings</button>
+    <button class="sb-btn" id="btn-help-sb" title="Help">?</button>
     <a class="sb-btn" href="https://naklitechie.github.io/" target="_blank" style="text-decoration:none">naklitechie.github.io</a>
   </div>
 </div>
@@ -807,6 +826,153 @@ button{cursor:pointer;font-family:inherit}
     </div>
   </div>
 
+  <div class="modal" id="modal-help" style="display:none;max-width:640px;width:92vw">
+    <div class="modal-hdr"><span class="modal-title">Help</span><button class="modal-x" data-mc="help">×</button></div>
+    <div class="help-tabs" id="help-tabs">
+      <button class="help-tab active" data-ht="0">Getting Started</button>
+      <button class="help-tab" data-ht="1">Collections</button>
+      <button class="help-tab" data-ht="2">Environments</button>
+      <button class="help-tab" data-ht="3">Scripts &amp; Tests</button>
+      <button class="help-tab" data-ht="4">Sharing</button>
+    </div>
+
+    <!-- Tab 0: Getting Started -->
+    <div class="help-pane active" id="help-pane-0">
+      <h3>Making your first request</h3>
+      <ul>
+        <li>Pick a method (GET, POST, etc.) from the dropdown on the left of the URL bar.</li>
+        <li>Type or paste a URL into the bar and hit <span class="help-kbd">Send</span> or press <span class="help-kbd">⌘ Enter</span> / <span class="help-kbd">Ctrl Enter</span>.</li>
+        <li>The response appears below — status code, time, and size are shown at the top.</li>
+      </ul>
+      <h3>Request tabs</h3>
+      <ul>
+        <li><strong>Params</strong> — query parameters, synced live with the URL bar.</li>
+        <li><strong>Headers</strong> — add any request headers you need.</li>
+        <li><strong>Body</strong> — send raw JSON/XML/text, form-data, or a file. Selecting a mode enables the editor.</li>
+        <li><strong>Auth</strong> — Bearer token, Basic Auth, or API Key (added to header or query param).</li>
+        <li><strong>Pre-req / Tests</strong> — run JavaScript before and after the request (see Scripts &amp; Tests tab).</li>
+      </ul>
+      <h3>Multiple requests</h3>
+      <ul>
+        <li>Click <strong>+</strong> in the tab bar to open a new request. Tabs are restored on reload.</li>
+        <li>An orange dot on a tab means unsaved changes.</li>
+      </ul>
+      <h3>Response panel</h3>
+      <ul>
+        <li><strong>Body</strong> — Pretty (syntax-highlighted), Raw, or Preview (rendered HTML in a sandbox).</li>
+        <li><strong>Headers</strong> — all response headers.</li>
+        <li><strong>Tests</strong> — pass/fail results from your test script.</li>
+        <li><strong>Console</strong> — output from <code>console.log()</code> in your scripts.</li>
+      </ul>
+      <div class="help-note">NakliPoster runs entirely in your browser. Nothing leaves your machine unless you explicitly hit Send.</div>
+    </div>
+
+    <!-- Tab 1: Collections -->
+    <div class="help-pane" id="help-pane-1">
+      <h3>What is a collection?</h3>
+      <p>A collection is a group of saved requests, stored as a <code>.json</code> file on your disk in Postman v2.1 format. You can open them in Postman, commit them to git, or share them with your team.</p>
+      <h3>Opening a workspace</h3>
+      <ul>
+        <li>Click <strong>Open Folder</strong> in the sidebar to pick a directory via your browser's file picker.</li>
+        <li>NakliPoster reads all <code>.json</code> collections from that folder and shows them in the sidebar.</li>
+        <li>Changes are autosaved to disk — no save button needed.</li>
+      </ul>
+      <h3>Saving a request</h3>
+      <ul>
+        <li>Click <strong>Save</strong> in the request toolbar, or press <span class="help-kbd">⌘ S</span> / <span class="help-kbd">Ctrl S</span>.</li>
+        <li>Choose an existing collection or create a new one. You can also create a folder inside the collection.</li>
+      </ul>
+      <h3>Importing</h3>
+      <ul>
+        <li>Click the <strong>↓</strong> (import) icon in the sidebar toolbar.</li>
+        <li>Supported formats: Postman Collection v2.1, OpenAPI 3.x / Swagger 2.0, cURL command (paste), HAR file.</li>
+      </ul>
+      <h3>Collection Runner</h3>
+      <ul>
+        <li>Click the <strong>▶</strong> (run) icon in the sidebar to open the Runner.</li>
+        <li>Pick a collection, set iterations and delay, optionally load a CSV or JSON data file to drive variable values across runs.</li>
+      </ul>
+    </div>
+
+    <!-- Tab 2: Environments -->
+    <div class="help-pane" id="help-pane-2">
+      <h3>What are environments?</h3>
+      <p>Environments let you define named variables (like <code>baseUrl</code>, <code>token</code>) and switch between sets of values — for example, dev vs. staging vs. production — without editing each request.</p>
+      <h3>Using variables</h3>
+      <ul>
+        <li>Wrap any variable name in double curly braces: <code>{{baseUrl}}/users/{{userId}}</code></li>
+        <li>Variables resolve in the URL, params, headers, body, and scripts.</li>
+        <li>Unresolved variables are highlighted red in the URL bar.</li>
+      </ul>
+      <h3>Creating an environment</h3>
+      <ul>
+        <li>Click <strong>Environments</strong> in the sidebar header, then <strong>+ New Environment</strong>.</li>
+        <li>Add key/value pairs. Toggle the eye icon to mask secrets in the UI.</li>
+        <li>Switch the active environment from the dropdown in the bottom-right status bar.</li>
+      </ul>
+      <h3>Variable scopes</h3>
+      <p>Resolution order (first match wins): <strong>Global → Collection → Environment → Local</strong>. Scripts can set variables at any scope using <code>pm.globals.set()</code>, <code>pm.environment.set()</code>, etc.</p>
+    </div>
+
+    <!-- Tab 3: Scripts & Tests -->
+    <div class="help-pane" id="help-pane-3">
+      <h3>Pre-request scripts</h3>
+      <p>JavaScript that runs <em>before</em> the request is sent. Use it to set dynamic headers, compute a signature, or update a variable.</p>
+      <h3>Test scripts</h3>
+      <p>JavaScript that runs <em>after</em> the response arrives. Write assertions that appear in the Tests response panel.</p>
+      <h3>Writing tests</h3>
+      <ul>
+        <li><code>pm.test('name', () =&gt; { ... })</code> — wraps a named assertion.</li>
+        <li><code>pm.expect(value).to.equal(200)</code> — Chai-style assertions.</li>
+        <li><code>pm.response.code</code>, <code>pm.response.json()</code>, <code>pm.response.text()</code></li>
+        <li><code>pm.response.headers['content-type']</code></li>
+      </ul>
+      <h3>Common assertions</h3>
+      <ul>
+        <li><code>.to.equal(x)</code> / <code>.to.not.equal(x)</code></li>
+        <li><code>.to.be.a('number')</code> / <code>.to.be.a('string')</code></li>
+        <li><code>.to.have.property('key')</code></li>
+        <li><code>.to.include('substring')</code></li>
+        <li><code>.to.be.above(0)</code> / <code>.to.be.below(500)</code></li>
+      </ul>
+      <h3>Modifying variables from scripts</h3>
+      <ul>
+        <li><code>pm.environment.set('token', pm.response.json().token)</code></li>
+        <li><code>pm.globals.get('key')</code> / <code>pm.globals.set('key', value)</code></li>
+      </ul>
+      <div class="help-note">Scripts are sandboxed with a Postman-compatible <code>pm</code> API. Most Postman test scripts will run unmodified.</div>
+    </div>
+
+    <!-- Tab 4: Sharing -->
+    <div class="help-pane" id="help-pane-4">
+      <h3>How sharing works</h3>
+      <p>NakliPoster encodes your collection into the URL fragment (<code>#...</code>). The fragment never touches a server — the entire payload lives only in the link.</p>
+      <h3>Sharing a request or collection</h3>
+      <ul>
+        <li>Click <strong>Share</strong> in the request toolbar to share the current request.</li>
+        <li>Right-click a collection in the sidebar → <strong>Share collection</strong>.</li>
+        <li>The modal shows the generated link and a QR code (if the link is short enough).</li>
+      </ul>
+      <h3>Encryption (optional)</h3>
+      <ul>
+        <li>Enter a passphrase in the Share modal before copying the link.</li>
+        <li>The payload is encrypted with AES-256-GCM. Only someone with the passphrase can import it.</li>
+        <li>Share the passphrase separately (e.g. via Signal). The link alone is useless without it.</li>
+      </ul>
+      <h3>Importing from a link</h3>
+      <ul>
+        <li>Open the link in a browser. NakliPoster detects the <code>#</code> fragment automatically.</li>
+        <li>A preview shows the collection name and request count before you confirm the import.</li>
+        <li>If the link is encrypted, you'll be prompted for the passphrase first.</li>
+      </ul>
+      <div class="help-note">Secret-tagged environment variables are excluded from shared links by default. You can opt in to include them if you trust the recipient and the channel.</div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" data-mc="help">Close</button>
+    </div>
+  </div>
+
 </div>
 
 <div class="ctx" id="ctx-menu" style="display:none"></div>
@@ -916,6 +1082,20 @@ function openSettingsModal(){
   $('s-redirects').checked = s.followRedirects;
   openModal('settings');
 }
+
+function openHelpModal(tabIndex=0){
+  $a('.help-tab').forEach((t,i)=>t.classList.toggle('active',i===tabIndex));
+  $a('.help-pane').forEach((p,i)=>p.classList.toggle('active',i===tabIndex));
+  openModal('help');
+}
+
+$('help-tabs')?.addEventListener('click',e=>{
+  const btn=e.target.closest('[data-ht]');
+  if(!btn) return;
+  const idx=+btn.dataset.ht;
+  $a('.help-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  $a('.help-pane').forEach((p,i)=>p.classList.toggle('active',i===idx));
+});
 
 // ── Modal ──
 function openModal(name){
@@ -2184,6 +2364,7 @@ function bindEvents(){
 
   // Settings
   $('btn-settings-open').onclick=$('btn-settings-sb').onclick=openSettingsModal;
+  $('btn-help-sb').onclick=()=>openHelpModal();
   $('btn-save-settings').onclick=saveSettings;
 
   // Import
