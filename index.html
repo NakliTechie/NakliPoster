@@ -278,9 +278,10 @@ button{cursor:pointer;font-family:inherit}
 .modal-x{background:none;border:none;color:var(--text-secondary);font-size:18px;padding:0 4px;line-height:1}
 .modal-x:hover{color:var(--text-primary)}
 /* Help modal */
-.help-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 18px;flex-shrink:0}
+.help-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 10px;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.help-tabs::-webkit-scrollbar{display:none}
 .help-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-secondary);
-  padding:8px 12px;font-size:12px;cursor:pointer;margin-bottom:-1px;white-space:nowrap}
+  padding:8px 9px;font-size:11.5px;cursor:pointer;margin-bottom:-1px;white-space:nowrap}
 .help-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .help-tab:hover:not(.active){color:var(--text-primary)}
 .help-pane{display:none;padding:18px;overflow-y:auto;flex:1}
@@ -1084,7 +1085,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       <button class="help-tab" data-ht="3">Scripts &amp; Tests</button>
       <button class="help-tab" data-ht="4">Sharing</button>
       <button class="help-tab" data-ht="5">AI Assistant</button>
-      <button class="help-tab" data-ht="6">Power Features</button>
+      <button class="help-tab" data-ht="6">Others</button>
     </div>
 
     <!-- Tab 0: Getting Started -->
