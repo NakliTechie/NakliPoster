@@ -1263,7 +1263,17 @@ mark{background:transparent;color:var(--accent);font-weight:600}
         <li><strong>Tests</strong> — pass/fail results from your test script.</li>
         <li><strong>Console</strong> — output from <code>console.log()</code> in your scripts.</li>
       </ul>
-      <div class="help-note">NakliPoster runs entirely in your browser. Nothing leaves your machine unless you explicitly hit Send.</div>
+      <h3>Try these public APIs</h3>
+      <p>All CORS-enabled, no auth needed. Click any to open in a new tab.</p>
+      <ul id="help-examples" style="list-style:none;padding:0;margin:8px 0">
+        <li><a href="#" class="help-example" data-method="GET" data-url="https://jsonplaceholder.typicode.com/posts/1"><strong>GET</strong> jsonplaceholder.typicode.com/posts/1</a> — tiny JSON, first request</li>
+        <li><a href="#" class="help-example" data-method="GET" data-url="https://api.open-meteo.com/v1/forecast?latitude=52.52&amp;longitude=13.41&amp;current=temperature_2m"><strong>GET</strong> api.open-meteo.com/v1/forecast?…</a> — query params (Berlin weather)</li>
+        <li><a href="#" class="help-example" data-method="POST" data-url="https://httpbin.org/post" data-body='{"hello":"world"}'><strong>POST</strong> httpbin.org/post</a> — echoes body &amp; headers back</li>
+        <li><a href="#" class="help-example" data-method="GET" data-url="https://rickandmortyapi.com/api/character/1"><strong>GET</strong> rickandmortyapi.com/api/character/1</a> — nested JSON</li>
+        <li><a href="#" class="help-example" data-method="GQL" data-url="https://graphqlzero.almansi.me/api" data-gql="{ user(id: 1) { id name email company { name } } }"><strong>GQL</strong> graphqlzero.almansi.me/api</a> — GraphQL sandbox</li>
+        <li><a href="#" class="help-example" data-method="WS" data-url="wss://ws.postman-echo.com/raw"><strong>WS</strong> ws.postman-echo.com/raw</a> — WebSocket echo server</li>
+      </ul>
+      <div class="help-note">These examples hit third-party sandbox services. Please don't script them — build your own tests against your own APIs. NakliPoster itself runs entirely in your browser; nothing leaves your machine unless you hit Send.</div>
     </div>
 
     <!-- Tab 1: Collections -->
@@ -3271,6 +3281,21 @@ function bindEvents(){
   // Settings
   $('btn-settings-open').onclick=$('btn-settings-sb').onclick=openSettingsModal;
   $('btn-help-open').onclick=$('btn-help-sb').onclick=()=>openHelpModal();
+  let helpExampleLast=0;
+  $a('#help-examples .help-example').forEach(a=>a.addEventListener('click',e=>{
+    e.preventDefault();
+    const now=Date.now();
+    if(now-helpExampleLast<2000) return;
+    helpExampleLast=now;
+    const d=a.dataset;
+    const existing=S.tabs.find(t=>t.url===d.url&&t.method===d.method);
+    if(existing){ switchTab(existing.id); closeModal(); return; }
+    const partial={method:d.method,url:d.url,name:deriveNameFromUrl(d.url)};
+    if(d.body){ partial.bodyMode='json'; partial.bodyRaw=d.body; }
+    if(d.gql){ partial.gqlQuery=d.gql; }
+    newTab(partial);
+    closeModal();
+  }));
   $('btn-save-settings').onclick=saveSettings;
 
   // Import
