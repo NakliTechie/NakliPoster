@@ -126,6 +126,22 @@ Public APIs and well-configured developer APIs generally work without issue.
 
 ---
 
+## Security model
+
+NakliPoster runs entirely in your browser. Nothing leaves your machine unless you explicitly hit Send. That's the whole model — there is no NakliPoster server, no account, no telemetry, no sync.
+
+A few things are worth understanding if you intend to trust the tool with real credentials:
+
+- **Your environment variables and auth tokens live in this browser profile** — in `localStorage` and, if you've opened a workspace, in the JSON files inside the folder you picked. Anyone with access to that profile or that folder can read them. Don't point NakliPoster at a folder synced to a service you don't fully trust.
+- **Pre-request and test scripts run as real JavaScript in this page.** A malicious script can read every environment variable (including secret-tagged ones), every saved request, and every token in storage — then send them anywhere. **Only paste scripts from sources you trust.** Treat a `pm` script the same way you'd treat `eval()` on your credentials. If the AI Assistant generates a test script, read it before accepting it.
+- **Imports don't carry scripts.** Postman collection imports and NakliPoster share links deliberately strip pre-request and test scripts on the way in, so a shared collection cannot smuggle code into your browser. Scripts only ever exist on tabs you've authored yourself.
+- **Share links are client-encrypted.** Optional passphrase protection uses AES-256-GCM via Web Crypto. Tabs with stored credentials show a warning before sharing; secret-tagged environment variables are excluded from shared links by default.
+- **No auto-updates and no remote code.** The tool is one static HTML file. Two small libraries (`lz-string`, `qrcodejs`) are lazy-loaded from a CDN only when you use sharing; everything else, including the syntax highlighter, is inline.
+
+If you find a security issue, please open an issue at [github.com/NakliTechie/NakliPoster](https://github.com/NakliTechie/NakliPoster).
+
+---
+
 ## Part of the NakliTechie series
 
 Browser-native tools that respect your privacy. No server. No API keys. No data leaving your device.

@@ -1360,7 +1360,14 @@ mark{background:transparent;color:var(--accent);font-weight:600}
         <li><code>pm.environment.set('token', pm.response.json().token)</code></li>
         <li><code>pm.globals.get('key')</code> / <code>pm.globals.set('key', value)</code></li>
       </ul>
-      <div class="help-note">Scripts are sandboxed with a Postman-compatible <code>pm</code> API. Most Postman test scripts will run unmodified.</div>
+      <div class="help-note">NakliPoster provides a Postman-compatible <code>pm</code> API, so most Postman test scripts run unmodified.</div>
+      <h3>⚠ Security: only run scripts you trust</h3>
+      <p>Pre-request and test scripts execute as <strong>real JavaScript in this page</strong>. A malicious script can read every environment variable (including secret-tagged ones), every saved request, and every token in browser storage — then send them anywhere.</p>
+      <ul>
+        <li><strong>Do not paste scripts from sources you don't trust</strong> — forums, Stack Overflow answers, random GitHub gists, AI chatbots. Treat a pm script the same as you'd treat <code>eval()</code> on your credentials.</li>
+        <li>If the AI Assistant generates a test script, <em>read it</em> before clicking <strong>→ Tests</strong> or <strong>→ Pre-req</strong>. The AI can be manipulated by malicious response content.</li>
+        <li>Imported Postman collections and shared NakliPoster links <em>do not carry scripts</em> — they are stripped on import for this reason. Scripts only ever exist on tabs you've authored yourself.</li>
+      </ul>
     </div>
 
     <!-- Tab 4: Sharing -->
