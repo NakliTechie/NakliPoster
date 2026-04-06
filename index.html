@@ -557,6 +557,103 @@ mark{background:transparent;color:var(--accent);font-weight:600}
 .runner-progress{height:3px;background:var(--accent);transition:width .2s;border-radius:2px}
 .runner-progress-wrap{height:3px;background:var(--border);border-radius:2px;margin:8px 0}
 #runner-summary{font-size:12.5px;padding:6px 0;display:flex;gap:16px}
+
+/* ── Response Variable Extraction ── */
+#btn-extract-toggle{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:3px;
+  background:none;border:1px solid var(--border);color:var(--text-secondary);transition:.1s;cursor:pointer}
+#btn-extract-toggle:hover,#btn-extract-toggle.active{border-color:var(--accent);color:var(--accent);background:rgba(255,108,55,.08)}
+#extract-panel{border-top:1px solid var(--border);padding:8px 10px 10px;background:var(--bg-sidebar);flex-shrink:0}
+#extract-hint{font-size:11px;color:var(--text-muted);margin-bottom:7px}
+#extract-hint code{font-family:var(--font-mono);background:var(--bg-input);padding:1px 4px;border-radius:3px}
+#extract-form{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#extract-path{flex:2;min-width:110px;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;
+  padding:4px 7px;font-family:var(--font-mono);font-size:12px;color:var(--text-primary);outline:none}
+#extract-path:focus{border-color:var(--accent)}
+#extract-preview-val{flex:1;min-width:60px;max-width:150px;font-family:var(--font-mono);font-size:11px;
+  color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#extract-var-name{flex:1;min-width:90px;background:var(--bg-input);border:1px solid var(--border);
+  border-radius:4px;padding:4px 7px;font-size:12px;color:var(--text-primary);outline:none}
+#extract-var-name:focus{border-color:var(--accent)}
+#extract-scope{background:var(--bg-input);border:1px solid var(--border);border-radius:4px;
+  padding:4px 6px;font-size:12px;color:var(--text-primary);outline:none;flex-shrink:0}
+#btn-extract-set{background:var(--accent);border:none;border-radius:4px;color:#fff;
+  padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
+#btn-extract-set:hover:not(:disabled){background:var(--accent-hover)}
+#btn-extract-set:disabled{opacity:.45;cursor:default}
+.add-to-script-row{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:11px;color:var(--text-secondary)}
+.add-to-script-row input[type=checkbox]{accent-color:var(--accent)}
+.add-to-script-row code{font-family:var(--font-mono);background:var(--bg-input);padding:1px 4px;border-radius:3px;font-size:10.5px}
+.jv-click{cursor:pointer;border-radius:2px;transition:background .1s}
+.jv-click:hover{background:rgba(255,108,55,.22);outline:1px solid rgba(255,108,55,.35)}
+.jv-selected{background:rgba(255,108,55,.28)!important;outline:1px solid var(--accent)!important}
+
+/* ── OAuth 2.0 ── */
+#btn-oauth-get-token{margin-top:6px;width:100%;padding:7px;background:none;border:1px solid var(--accent);
+  border-radius:4px;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+#btn-oauth-get-token:hover:not(:disabled){background:rgba(255,108,55,.1)}
+#btn-oauth-get-token:disabled{opacity:.5;cursor:default}
+#oauth-token-status{margin-top:8px;font-size:12px;padding:6px 8px;border-radius:4px;display:none;line-height:1.6}
+#oauth-token-status.ok{background:rgba(73,204,144,.1);color:var(--s2xx);display:block}
+#oauth-token-status.err{background:rgba(249,62,62,.1);color:var(--s4xx);display:block}
+#oauth-token-status.loading{color:var(--text-muted);display:block}
+.oauth-token-preview{font-family:var(--font-mono);font-size:10.5px;opacity:.7;display:block;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+
+/* ── GraphQL ── */
+#gql-panel{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+#gql-main{display:flex;flex:1;overflow:hidden;min-height:0}
+#gql-query-wrap{display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;border-right:1px solid var(--border)}
+#gql-query{flex:1;width:100%;background:var(--bg-app);color:var(--text-primary);border:none;
+  padding:10px;font-family:var(--font-mono);font-size:12px;resize:none;outline:none;
+  line-height:1.5;overflow-y:auto}
+#gql-query::placeholder{color:var(--text-muted)}
+#gql-vars-section{border-top:1px solid var(--border);flex-shrink:0}
+#gql-vars-toggle{display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;
+  font-size:11px;color:var(--text-secondary);background:none;border:none;width:100%;text-align:left}
+#gql-vars-toggle:hover{background:var(--bg-hover);color:var(--text-primary)}
+#gql-vars-toggle .arrow{font-size:9px;transition:transform .15s}
+#gql-vars-body{display:none;padding:0 10px 8px}
+#gql-vars{width:100%;background:var(--bg-app);color:var(--text-primary);border:1px solid var(--border);
+  border-radius:4px;padding:8px;font-family:var(--font-mono);font-size:12px;resize:vertical;
+  outline:none;min-height:70px;max-height:180px}
+#gql-vars:focus{border-color:var(--accent)}
+#gql-op-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-top:1px solid var(--border);flex-shrink:0}
+#gql-op-label{font-size:11px;color:var(--text-secondary);flex-shrink:0}
+#gql-op-name{background:var(--bg-input);border:1px solid var(--border);border-radius:4px;
+  padding:3px 8px;font-size:12px;flex:1;outline:none;color:var(--text-primary)}
+#gql-op-name:focus{border-color:var(--accent)}
+/* Schema explorer */
+#gql-schema-wrap{width:220px;min-width:160px;flex-shrink:0;display:flex;flex-direction:column;
+  overflow:hidden;background:var(--bg-sidebar)}
+#gql-schema-header{display:flex;align-items:center;padding:6px 10px;border-bottom:1px solid var(--border);
+  font-size:11px;font-weight:600;color:var(--text-secondary);gap:4px}
+#btn-introspect{background:none;border:1px solid var(--border);border-radius:3px;color:var(--text-secondary);
+  font-size:10px;padding:2px 6px;cursor:pointer;margin-left:auto;transition:.1s}
+#btn-introspect:hover{border-color:var(--accent);color:var(--accent)}
+#btn-introspect:disabled{opacity:.5;cursor:default}
+#gql-schema-body{flex:1;overflow-y:auto;padding:4px 0}
+#gql-schema-empty{padding:12px 10px;font-size:11.5px;color:var(--text-secondary);line-height:1.5}
+.gql-type-row{padding:4px 10px;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:12px}
+.gql-type-row:hover{background:var(--bg-hover)}
+.gql-type-name{font-weight:600;color:var(--accent)}
+.gql-type-kind{font-size:9px;color:var(--text-muted);text-transform:uppercase;margin-left:auto}
+.gql-fields{padding-left:12px;display:none}
+.gql-fields.open{display:block}
+.gql-field-row{padding:3px 10px;cursor:pointer;font-size:11.5px;color:var(--text-secondary);
+  display:flex;align-items:baseline;gap:4px}
+.gql-field-row:hover{background:var(--bg-hover);color:var(--text-primary)}
+.gql-field-type{font-size:10px;color:var(--text-muted);font-family:var(--font-mono)}
+#btn-introspect-inline{display:none}
+#gql-schema-wrap.collapsed{width:28px;overflow:hidden}
+#gql-schema-wrap.collapsed #gql-schema-header span:not(.schema-toggle),
+#gql-schema-wrap.collapsed #gql-schema-body{display:none}
+.schema-toggle{cursor:pointer;margin-left:auto;font-size:11px;padding:2px 4px;border-radius:3px}
+.schema-toggle:hover{background:var(--bg-hover)}
+/* Introspect button in URL bar */
+#btn-gql-introspect{display:none;background:none;border:1px solid var(--border);border-radius:4px;
+  color:var(--text-secondary);font-size:11px;padding:4px 8px;white-space:nowrap;transition:.1s}
+#btn-gql-introspect:hover{border-color:var(--accent);color:var(--accent)}
+#btn-gql-introspect:disabled{opacity:.5;cursor:default}
 </style>
 </head>
 <body>
@@ -661,8 +758,10 @@ mark{background:transparent;color:var(--accent);font-weight:600}
           <option>GET</option><option>POST</option><option>PUT</option>
           <option>PATCH</option><option>DELETE</option><option>HEAD</option><option>OPTIONS</option>
           <option value="WS">WS</option>
+          <option value="GQL">GQL</option>
         </select>
         <input id="url-input" type="text" placeholder="https://api.example.com/endpoint" spellcheck="false" autocomplete="off">
+        <button id="btn-gql-introspect" title="Fetch schema via introspection">⟳ Schema</button>
         <button id="btn-cancel">Cancel</button>
         <button id="btn-send">Send</button>
       </div>
@@ -712,6 +811,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
             <option value="bearer">Bearer Token</option>
             <option value="basic">Basic Auth</option>
             <option value="apikey">API Key</option>
+            <option value="oauth2">OAuth 2.0</option>
           </select>
           <div id="auth-fields"></div>
         </div>
@@ -727,6 +827,34 @@ mark{background:transparent;color:var(--accent);font-weight:600}
         <textarea class="script-editor" id="tests-editor" spellcheck="false"
           placeholder="// Runs after the response is received&#10;pm.test('Status is 200', () => {&#10;  pm.expect(pm.response.code).to.equal(200);&#10;});"></textarea>
         <div class="script-hint">Access: pm.response · pm.expect() · pm.test() · console.log()</div>
+      </div>
+    </div>
+
+    <!-- GraphQL Panel (shown when method=GQL) -->
+    <div id="gql-panel">
+      <div id="gql-main">
+        <div id="gql-query-wrap">
+          <textarea id="gql-query" spellcheck="false" placeholder="# GraphQL query&#10;query {&#10;  hero {&#10;    name&#10;  }&#10;}"></textarea>
+          <div id="gql-vars-section">
+            <button id="gql-vars-toggle"><span class="arrow">▶</span> Variables</button>
+            <div id="gql-vars-body">
+              <textarea id="gql-vars" spellcheck="false" placeholder='{ "id": "1" }'></textarea>
+            </div>
+          </div>
+          <div id="gql-op-row">
+            <span id="gql-op-label">Operation name</span>
+            <input id="gql-op-name" type="text" placeholder="(optional)" spellcheck="false" autocomplete="off">
+          </div>
+        </div>
+        <div id="gql-schema-wrap">
+          <div id="gql-schema-header">
+            <span>Schema</span>
+            <button id="btn-introspect" title="Fetch schema via introspection">⟳ Fetch</button>
+          </div>
+          <div id="gql-schema-body">
+            <div id="gql-schema-empty">Click ⟳ Fetch to load the schema from the endpoint.</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -773,9 +901,28 @@ mark{background:transparent;color:var(--accent);font-weight:600}
             <button class="rbm-btn active" data-m="pretty">Pretty</button>
             <button class="rbm-btn" data-m="raw">Raw</button>
             <button class="rbm-btn" data-m="preview">Preview</button>
+            <button id="btn-extract-toggle" title="Extract response values into variables">⇢ Extract</button>
           </div>
           <pre id="res-body-pre"></pre>
           <iframe id="res-preview-frame" sandbox="allow-scripts"></iframe>
+          <div id="extract-panel" style="display:none">
+            <div id="extract-hint">Click a value in the JSON above, or type a path like <code>data.token</code> or <code>users[0].id</code></div>
+            <div id="extract-form">
+              <input id="extract-path" placeholder="JSON path" spellcheck="false" autocomplete="off">
+              <span id="extract-preview-val" title="Resolved value">—</span>
+              <input id="extract-var-name" placeholder="Variable name">
+              <select id="extract-scope">
+                <option value="environment">Environment</option>
+                <option value="globals">Globals</option>
+                <option value="collection">Collection</option>
+              </select>
+              <button id="btn-extract-set" disabled>Set Variable</button>
+            </div>
+            <div class="add-to-script-row">
+              <input type="checkbox" id="extract-add-script" checked>
+              <label for="extract-add-script">Also add <code>pm.environment.set()</code> line to Tests script</label>
+            </div>
+          </div>
         </div>
         <div class="respanel" id="respanel-headers">
           <div id="res-hdrs-panel"></div>
@@ -1092,7 +1239,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
     <div class="help-pane active" id="help-pane-0">
       <h3>Making your first request</h3>
       <ul>
-        <li>Pick a method (GET, POST, etc.) from the dropdown on the left of the URL bar.</li>
+        <li>Pick a method (GET, POST, etc., <strong>WS</strong> for WebSocket, <strong>GQL</strong> for GraphQL) from the dropdown on the left of the URL bar.</li>
         <li>Type or paste a URL into the bar and hit <span class="help-kbd">Send</span> or press <span class="help-kbd">⌘ Enter</span> / <span class="help-kbd">Ctrl Enter</span>.</li>
         <li>The response appears below — status code, time, and size are shown at the top.</li>
       </ul>
@@ -1101,7 +1248,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
         <li><strong>Params</strong> — query parameters, synced live with the URL bar.</li>
         <li><strong>Headers</strong> — add any request headers you need.</li>
         <li><strong>Body</strong> — send raw JSON/XML/text, form-data, or a file. Selecting a mode enables the editor.</li>
-        <li><strong>Auth</strong> — Bearer token, Basic Auth, or API Key (added to header or query param).</li>
+        <li><strong>Auth</strong> — Bearer token, Basic Auth, API Key, or OAuth 2.0 (Authorization Code + Client Credentials).</li>
         <li><strong>Pre-req / Tests</strong> — run JavaScript before and after the request (see Scripts &amp; Tests tab).</li>
       </ul>
       <h3>Multiple requests</h3>
@@ -1166,6 +1313,15 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       </ul>
       <h3>Variable scopes</h3>
       <p>Resolution order (first match wins): <strong>Global → Collection → Environment → Local</strong>. Scripts can set variables at any scope using <code>pm.globals.set()</code>, <code>pm.environment.set()</code>, etc.</p>
+      <h3>Response variable extraction</h3>
+      <p>The fastest way to capture a value from a response — no scripting needed.</p>
+      <ul>
+        <li>After a response arrives, click <strong>⇢ Extract</strong> in the response body toolbar.</li>
+        <li>Click any value in the JSON (strings, numbers, booleans) to select it. The path and variable name are auto-filled.</li>
+        <li>Or type a path manually: <code>data.token</code>, <code>users[0].id</code>, etc.</li>
+        <li>Choose a scope (Environment, Globals, or Collection) and click <strong>Set Variable</strong>.</li>
+        <li>Check <strong>Also add <code>pm.environment.set()</code> to Tests script</strong> to persist the extraction for the Collection Runner.</li>
+      </ul>
     </div>
 
     <!-- Tab 3: Scripts & Tests -->
@@ -1257,6 +1413,25 @@ mark{background:transparent;color:var(--accent);font-weight:600}
 
     <!-- Tab 6: Power Features -->
     <div class="help-pane" id="help-pane-6">
+      <h3>GraphQL</h3>
+      <p>Select <strong>GQL</strong> from the method dropdown to switch to GraphQL mode.</p>
+      <ul>
+        <li>Write your query or mutation in the query editor. Variables can be added in the collapsible <strong>Variables</strong> panel below it as a JSON object.</li>
+        <li>The <strong>Operation name</strong> field lets you specify which operation to run when a document contains multiple named operations.</li>
+        <li>NakliPoster sends the request as a <code>POST</code> with a JSON body <code>{"query":"…","variables":{…}}</code> — the standard GraphQL over HTTP convention.</li>
+        <li><strong>Schema explorer</strong> — click <strong>⟳ Fetch</strong> (or <strong>⟳ Schema</strong> in the URL bar) to run an introspection query against the endpoint. The schema tree lists all types and their fields. Click any field name to insert it into the query editor at the cursor position.</li>
+        <li>Headers and Auth work the same as any other request — useful for APIs that require a Bearer token or API key.</li>
+      </ul>
+      <div class="help-note">The schema is cached in memory for the current session. If the endpoint changes, click ⟳ Fetch again to refresh it.</div>
+
+      <h3>OAuth 2.0</h3>
+      <p>Select <strong>OAuth 2.0</strong> from the Auth dropdown to configure a full OAuth flow.</p>
+      <ul>
+        <li><strong>Client Credentials</strong> — enter Token URL, Client ID, and Secret. Click <strong>Get New Access Token</strong>. The token is fetched directly with no browser interaction and applied as a Bearer token for all subsequent requests.</li>
+        <li><strong>Authorization Code</strong> — enter Auth URL, Token URL, Client ID, Client Secret, and Redirect URI. The Redirect URI defaults to the current page URL (<code>http://localhost:8097/</code> in local use). Click <strong>Get New Access Token</strong>: a popup opens to the provider's login page. After you log in, the provider redirects to the Redirect URI, NakliPoster detects the code, exchanges it for a token, and closes the popup automatically.</li>
+      </ul>
+      <div class="help-note">For Authorization Code to work, you must register the Redirect URI in your OAuth provider's app settings. When running locally, register <code>http://localhost:8097/</code> (or whichever port you use). The token is stored in the tab and sent as <code>Authorization: Bearer &lt;token&gt;</code> automatically.</div>
+
       <h3>Global Search — <span class="help-kbd">⌘ K</span> / <span class="help-kbd">Ctrl K</span></h3>
       <p>Opens a spotlight-style search across everything in the app — collection request names, URLs, body content, and recent history. Arrow keys to navigate, Enter to open, Esc to close.</p>
 
@@ -1366,7 +1541,7 @@ function toast(msg, type='info', ms=2800){
 }
 
 // ── State ──
-const S = {
+const S = window.S = {
   tabs: [],
   activeTabId: null,
   collections: [],
@@ -1383,7 +1558,11 @@ const S = {
 function mkReqState(o={}){
   return { method:'GET', url:'', params:[], headers:[], bodyMode:'none', bodyRaw:'',
     bodyForm:[], auth:{type:'none',bearer:'',basicUser:'',basicPass:'',
-    apiKeyKey:'X-API-Key',apiKeyValue:'',apiKeyIn:'header'}, response:null, ...o };
+    apiKeyKey:'X-API-Key',apiKeyValue:'',apiKeyIn:'header',
+    grantType:'authorization_code',authUrl:'',tokenUrl:'',clientId:'',clientSecret:'',
+    redirectUri:'',scope:'',accessToken:'',tokenExpiry:null},
+    gqlQuery:'', gqlVars:'', gqlOperationName:'',
+    response:null, ...o };
 }
 function mkTab(o={}){
   return { id:uid(), name:'New Request', dirty:false, collId:null, itemId:null,
@@ -1514,6 +1693,9 @@ function saveUIToTab(){
   tab.bodyMode = $q('input[name=bm]:checked')?.value || 'none';
   tab.bodyRaw  = $('body-raw').value;
   tab.bodyForm = getKV('body-form-kv');
+  tab.gqlQuery = $('gql-query').value;
+  tab.gqlVars  = $('gql-vars').value;
+  tab.gqlOperationName = $('gql-op-name').value;
   tab.preScript = $('prescript-editor').value;
   tab.testScript = $('tests-editor').value;
   tab.auth.type = $('auth-type').value;
@@ -1524,6 +1706,15 @@ function saveUIToTab(){
   tab.auth.apiKeyKey = af.querySelector('#af-akk')?.value || tab.auth.apiKeyKey;
   tab.auth.apiKeyValue = af.querySelector('#af-akv')?.value || tab.auth.apiKeyValue;
   tab.auth.apiKeyIn  = af.querySelector('#af-aki')?.value || tab.auth.apiKeyIn;
+  if(tab.auth.type==='oauth2'){
+    tab.auth.grantType     = af.querySelector('#af-oauth-grant')?.value       || tab.auth.grantType;
+    tab.auth.authUrl       = af.querySelector('#af-oauth-auth-url')?.value    ?? tab.auth.authUrl;
+    tab.auth.tokenUrl      = af.querySelector('#af-oauth-token-url')?.value   ?? tab.auth.tokenUrl;
+    tab.auth.clientId      = af.querySelector('#af-oauth-client-id')?.value   ?? tab.auth.clientId;
+    tab.auth.clientSecret  = af.querySelector('#af-oauth-client-secret')?.value ?? tab.auth.clientSecret;
+    tab.auth.redirectUri   = af.querySelector('#af-oauth-redirect')?.value    ?? tab.auth.redirectUri;
+    tab.auth.scope         = af.querySelector('#af-oauth-scope')?.value       ?? tab.auth.scope;
+  }
   autosaveTab();
 }
 
@@ -1541,6 +1732,10 @@ function loadTabToUI(tab){
   $('body-raw').value = tab.bodyRaw || '';
   renderKV('body-form-kv', tab.bodyForm, markDirty);
   updateBodyUI(bm);
+  // gql
+  $('gql-query').value = tab.gqlQuery || '';
+  $('gql-vars').value  = tab.gqlVars  || '';
+  $('gql-op-name').value = tab.gqlOperationName || '';
   // auth
   $('auth-type').value = tab.auth?.type || 'none';
   renderAuth(tab.auth);
@@ -1711,6 +1906,40 @@ function renderAuth(auth={}) {
       <div class="auth-row"><label>Add to</label>
       <select id="af-aki"><option value="header" ${auth.apiKeyIn==='header'?'selected':''}>Header</option>
       <option value="query" ${auth.apiKeyIn==='query'?'selected':''}>Query Param</option></select></div>`;
+  } else if(t==='oauth2'){
+    const rUri=auth.redirectUri||(location.origin+location.pathname);
+    const isAC=(auth.grantType||'authorization_code')==='authorization_code';
+    af.innerHTML=`
+      <div class="auth-row" id="af-oauth-grant-row"><label>Grant Type</label>
+        <select id="af-oauth-grant">
+          <option value="authorization_code"${isAC?' selected':''}>Authorization Code</option>
+          <option value="client_credentials"${!isAC?' selected':''}>Client Credentials</option>
+        </select></div>
+      <div class="auth-row" id="af-oauth-auth-url-row"${!isAC?' style="display:none"':''}>
+        <label>Auth URL</label>
+        <input id="af-oauth-auth-url" type="text" placeholder="https://provider.com/oauth/authorize" value="${esc(auth.authUrl||'')}"></div>
+      <div class="auth-row"><label>Token URL</label>
+        <input id="af-oauth-token-url" type="text" placeholder="https://provider.com/oauth/token" value="${esc(auth.tokenUrl||'')}"></div>
+      <div class="auth-row"><label>Client ID</label>
+        <input id="af-oauth-client-id" type="text" value="${esc(auth.clientId||'')}"></div>
+      <div class="auth-row"><label>Client Secret</label>
+        <input id="af-oauth-client-secret" type="password" value="${esc(auth.clientSecret||'')}"></div>
+      <div class="auth-row" id="af-oauth-redirect-row"${!isAC?' style="display:none"':''}>
+        <label>Redirect URI</label>
+        <input id="af-oauth-redirect" type="text" value="${esc(rUri)}"></div>
+      <div class="auth-row"><label>Scope</label>
+        <input id="af-oauth-scope" type="text" placeholder="openid profile (optional)" value="${esc(auth.scope||'')}"></div>
+      <button id="btn-oauth-get-token" type="button">Get New Access Token</button>
+      <div id="oauth-token-status"${auth.accessToken?' class="ok"':''}>
+        ${auth.accessToken?`✓ Token active<span class="oauth-token-preview">${esc(auth.accessToken.slice(0,80))}${auth.accessToken.length>80?'…':''}</span>`:''}
+      </div>`;
+    $('af-oauth-grant').addEventListener('change',()=>{
+      const ac=$('af-oauth-grant').value==='authorization_code';
+      $('af-oauth-auth-url-row').style.display=ac?'':'none';
+      $('af-oauth-redirect-row').style.display=ac?'':'none';
+      markDirty();
+    });
+    $('btn-oauth-get-token').onclick=doOAuthGetToken;
   }
   $a('.auth-row input, .auth-row select', af).forEach(el=>el.oninput=markDirty);
 }
@@ -1762,6 +1991,8 @@ function buildRequest(tab){
     headers['Authorization']='Basic '+btoa(auth.basicUser+':'+auth.basicPass);
   } else if(auth.type==='apikey'&&auth.apiKeyValue){
     if(auth.apiKeyIn==='header') headers[auth.apiKeyKey]=resolveVars(auth.apiKeyValue);
+  } else if(auth.type==='oauth2'&&auth.accessToken){
+    headers['Authorization']='Bearer '+auth.accessToken;
   }
   // Cookie injection
   try {
@@ -1792,6 +2023,17 @@ function buildRequest(tab){
     const fd=new FormData();
     (tab.bodyForm||[]).filter(f=>f.enabled&&f.key).forEach(f=>fd.append(f.key,resolveVars(f.value)));
     body=fd;
+  }
+  // GraphQL — override method to POST, build JSON body
+  if(method==='GQL'){
+    const gqlBody={query:tab.gqlQuery||''};
+    if(tab.gqlOperationName?.trim()) gqlBody.operationName=tab.gqlOperationName.trim();
+    if(tab.gqlVars?.trim()){
+      try{ gqlBody.variables=JSON.parse(tab.gqlVars); }catch{ /* ignore malformed vars */ }
+    }
+    headers['Content-Type']='application/json';
+    headers['Accept']='application/json';
+    return { method:'POST', url, headers, body:JSON.stringify(gqlBody) };
   }
   // API key in query
   let finalUrl=url;
@@ -1974,7 +2216,8 @@ function renderResBody(mode, r){
   }
   // pretty
   if(isJSON){
-    pre.innerHTML=highlightJSON(_rawResponseBody);
+    pre.innerHTML=_extractActive?highlightJSONInteractive(_rawResponseBody):highlightJSON(_rawResponseBody);
+    if(_extractActive) updateExtractPreview();
   } else if(isXML){
     pre.innerHTML=esc(_rawResponseBody);
   } else {
@@ -1995,6 +2238,256 @@ function highlightJSON(str){
   }catch{
     return esc(str);
   }
+}
+
+// ── Response Variable Extraction ──
+let _extractActive = false;
+let _extractJsonObj = null;
+
+function renderJSONNode(val, path, depth){
+  const ind = S.settings.jsonIndent||2;
+  const pad = ' '.repeat((depth+1)*ind);
+  const close = ' '.repeat(depth*ind);
+  if(val===null)
+    return `<span class="jn jv-click" data-path="${esc(path)}" data-val="null">null</span>`;
+  if(typeof val==='boolean')
+    return `<span class="jb jv-click" data-path="${esc(path)}" data-val="${val}">${val}</span>`;
+  if(typeof val==='number')
+    return `<span class="ji jv-click" data-path="${esc(path)}" data-val="${val}">${val}</span>`;
+  if(typeof val==='string')
+    return `<span class="js jv-click" data-path="${esc(path)}" data-val="${esc(val)}">"${esc(val)}"</span>`;
+  if(Array.isArray(val)){
+    if(!val.length) return '[]';
+    const items=val.map((v,i)=>`${pad}${renderJSONNode(v,path?`${path}[${i}]`:`[${i}]`,depth+1)}`);
+    return `[\n${items.join(',\n')}\n${close}]`;
+  }
+  if(val&&typeof val==='object'){
+    const keys=Object.keys(val);
+    if(!keys.length) return '{}';
+    const items=keys.map(k=>{
+      const cp=path?`${path}.${k}`:k;
+      return `${pad}<span class="jk">"${esc(k)}"</span>: ${renderJSONNode(val[k],cp,depth+1)}`;
+    });
+    return `{\n${items.join(',\n')}\n${close}}`;
+  }
+  return esc(String(val));
+}
+
+function highlightJSONInteractive(str){
+  try{
+    const obj=JSON.parse(str);
+    _extractJsonObj=obj;
+    return renderJSONNode(obj,'',0);
+  }catch{
+    _extractJsonObj=null;
+    return esc(str);
+  }
+}
+
+function resolveJSONPath(obj,path){
+  if(!path||obj==null) return undefined;
+  try{
+    const parts=path.replace(/\[(\d+)\]/g,'.$1').split('.').filter(Boolean);
+    let cur=obj;
+    for(const p of parts){
+      if(cur==null||typeof cur!=='object') return undefined;
+      cur=cur[p];
+    }
+    return cur;
+  }catch{ return undefined; }
+}
+
+function pathToGetter(path){
+  // "data.token" → "pm.response.json()?.data?.token"
+  // "users[0].id" → "pm.response.json()?.users?.[0]?.id"
+  let expr='pm.response.json()';
+  const re=/([^.\[\]]+)|\[(\d+)\]/g;
+  let m;
+  while((m=re.exec(path))!==null){
+    if(m[1]!==undefined) expr+=`?.${m[1]}`;
+    else expr+=`?.[${m[2]}]`;
+  }
+  return expr;
+}
+
+function updateExtractPreview(){
+  const path=$('extract-path').value.trim();
+  const varName=$('extract-var-name').value.trim();
+  const pv=$('extract-preview-val');
+  const btn=$('btn-extract-set');
+  if(!path||!_extractJsonObj){
+    pv.textContent='—'; pv.style.color='var(--text-muted)'; btn.disabled=true; return;
+  }
+  const val=resolveJSONPath(_extractJsonObj,path);
+  if(val===undefined){
+    pv.textContent='not found'; pv.style.color='var(--s4xx)'; btn.disabled=true;
+  } else {
+    const display=typeof val==='object'?JSON.stringify(val):String(val);
+    pv.textContent=display.length>40?display.slice(0,40)+'…':display;
+    pv.style.color='var(--text-primary)';
+    btn.disabled=!varName;
+  }
+}
+
+function doExtractVariable(){
+  const path=$('extract-path').value.trim();
+  const varName=$('extract-var-name').value.trim();
+  const scope=$('extract-scope').value;
+  const addScript=$('extract-add-script').checked;
+  if(!path||!varName||!_extractJsonObj){ toast('Fill in path and variable name','err'); return; }
+  const val=resolveJSONPath(_extractJsonObj,path);
+  if(val===undefined){ toast('Path not found in response','err'); return; }
+  const strVal=typeof val==='object'?JSON.stringify(val):String(val);
+
+  // Write the variable
+  if(scope==='environment'){
+    const env=S.environments.find(e=>e.id===S.activeEnvId);
+    if(!env){ toast('No active environment — create one first','err'); return; }
+    const row=env.variables.find(r=>r.key===varName);
+    if(row) row.value=strVal; else env.variables.push({key:varName,value:strVal,enabled:true});
+    saveEnvironments(); renderEnvEditor();
+  } else if(scope==='globals'){
+    S.globals[varName]=strVal;
+    saveEnvironments(); renderEnvEditor();
+  } else if(scope==='collection'){
+    const tab=getActiveTab();
+    if(!tab?.collId){ toast('Request not saved to a collection','err'); return; }
+    setCollVar(tab.collId,varName,strVal);
+  }
+
+  // Optionally append to Tests script
+  if(addScript){
+    const tab=getActiveTab();
+    if(tab){
+      const setterScope=scope==='collection'?'collectionVariables':scope;
+      const line=`pm.${setterScope}.set('${varName}', ${pathToGetter(path)});`;
+      const cur=(tab.testScript||'').trim();
+      if(!cur.includes(line)){
+        tab.testScript=cur?cur+'\n'+line:line;
+        $('tests-editor').value=tab.testScript;
+        autosaveTab();
+      }
+    }
+  }
+
+  const preview=strVal.length>30?strVal.slice(0,30)+'…':strVal;
+  toast(`{{${varName}}} = ${preview}`,'ok');
+}
+
+// ── OAuth 2.0 ──
+async function doOAuthGetToken(){
+  saveUIToTab();
+  const tab=getActiveTab();
+  if(!tab) return;
+  const auth=tab.auth;
+  const btn=$('btn-oauth-get-token');
+  const status=$('oauth-token-status');
+  if(!auth.tokenUrl){ toast('Enter a Token URL first','err'); return; }
+
+  btn.disabled=true;
+  status.className='loading'; status.textContent='Getting token…';
+
+  try{
+    let data;
+    if((auth.grantType||'authorization_code')==='client_credentials'){
+      data=await oauthClientCredentials(auth);
+    } else {
+      if(!auth.authUrl){ toast('Enter an Auth URL first','err'); btn.disabled=false; return; }
+      data=await oauthAuthorizationCode(auth);
+    }
+    const token=data.access_token;
+    if(!token) throw new Error('No access_token in response: '+JSON.stringify(data));
+    tab.auth.accessToken=token;
+    tab.auth.tokenExpiry=data.expires_in?Date.now()+data.expires_in*1000:null;
+    autosaveTab();
+    const expStr=data.expires_in?` — expires in ${data.expires_in}s`:'';
+    status.className='ok';
+    status.innerHTML=`✓ Token obtained${expStr}<span class="oauth-token-preview">${esc(token.slice(0,80))}${token.length>80?'…':''}</span>`;
+    toast('OAuth token obtained','ok');
+  }catch(e){
+    status.className='err'; status.textContent='✗ '+e.message;
+    toast('OAuth failed: '+e.message,'err');
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+async function oauthClientCredentials(auth){
+  const params=new URLSearchParams({
+    grant_type:'client_credentials',
+    client_id:auth.clientId,
+    client_secret:auth.clientSecret,
+    ...(auth.scope?{scope:auth.scope}:{}),
+  });
+  const res=await fetch(auth.tokenUrl,{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:params.toString(),
+  });
+  if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+function oauthAuthorizationCode(auth){
+  return new Promise((resolve,reject)=>{
+    const state=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+    const authUrl=new URL(auth.authUrl);
+    authUrl.searchParams.set('response_type','code');
+    authUrl.searchParams.set('client_id',auth.clientId);
+    authUrl.searchParams.set('redirect_uri',auth.redirectUri||(location.origin+location.pathname));
+    authUrl.searchParams.set('state',state);
+    if(auth.scope) authUrl.searchParams.set('scope',auth.scope);
+
+    const popup=window.open(authUrl.toString(),'oauth_popup','width=560,height=680,left=200,top=100');
+    if(!popup||popup.closed){ reject(new Error('Popup blocked — allow popups for this page')); return; }
+
+    let settled=false;
+    function done(fn){ if(settled) return; settled=true; clearTimeout(timer); clearInterval(poll); window.removeEventListener('message',handler); fn(); }
+
+    const timer=setTimeout(()=>done(()=>reject(new Error('OAuth timed out (5 min)'))), 300000);
+    const poll=setInterval(()=>{ if(popup.closed) done(()=>reject(new Error('Popup was closed'))); },500);
+
+    async function handler(event){
+      if(event.data?.type!=='np_oauth_callback') return;
+      done(async()=>{
+        try{
+          const url=new URL(event.data.href);
+          const code=url.searchParams.get('code');
+          const retState=url.searchParams.get('state');
+          const error=url.searchParams.get('error');
+          if(error) throw new Error(error+(url.searchParams.get('error_description')?' — '+url.searchParams.get('error_description'):''));
+          if(retState!==state) throw new Error('State mismatch — possible CSRF');
+          if(!code) throw new Error('No code in redirect');
+          // Exchange code for token
+          const params=new URLSearchParams({
+            grant_type:'authorization_code',
+            code,
+            redirect_uri:auth.redirectUri||(location.origin+location.pathname),
+            client_id:auth.clientId,
+            client_secret:auth.clientSecret,
+          });
+          const res=await fetch(auth.tokenUrl,{
+            method:'POST',
+            headers:{'Content-Type':'application/x-www-form-urlencoded'},
+            body:params.toString(),
+          });
+          if(!res.ok) throw new Error(`Token exchange: ${res.status} ${res.statusText}`);
+          resolve(await res.json());
+        }catch(e){ reject(e); }
+      });
+    }
+    window.addEventListener('message',handler);
+  });
+}
+
+function toggleExtractPanel(){
+  _extractActive=!_extractActive;
+  $('btn-extract-toggle').classList.toggle('active',_extractActive);
+  $('extract-panel').style.display=_extractActive?'':'none';
+  // Re-render to add/remove clickable spans
+  const tab=getActiveTab();
+  if(tab?.response) renderResBody(_currentResMode, tab.response);
+  if(_extractActive) $('extract-path').focus();
 }
 
 // ── History ──
@@ -2652,8 +3145,16 @@ function bindEvents(){
   // Request tabs
   $a('.rtab').forEach(btn=>btn.addEventListener('click',()=>{
     const t=btn.dataset.t;
+    if(btn.disabled) return;
     $a('.rtab').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
-    $a('.rpanel').forEach(p=>p.classList.toggle('active',p.id==='rpanel-'+t));
+    // In GQL mode: clear inline display:none so the panel can show via .active class
+    const isGQL=$('method-select').value==='GQL';
+    if(isGQL) $a('.rpanel').forEach(p=>{ p.style.display='none'; });
+    $a('.rpanel').forEach(p=>{
+      const match=p.id==='rpanel-'+t;
+      p.classList.toggle('active',match);
+      if(isGQL&&match) p.style.display='';
+    });
   }));
 
   // Add rows
@@ -4184,21 +4685,207 @@ function wsSend(){
 function onMethodChange(){
   const method=$('method-select').value;
   const isWS=method==='WS';
-  // Show/hide WS panel and HTTP panels
+  const isGQL=method==='GQL';
+  const isHTTP=!isWS&&!isGQL;
+  // Show/hide panels
   $('ws-panel').style.display=isWS?'flex':'none';
-  $('req-tabs').style.display=isWS?'none':'';
-  $('resize-handle').style.display=isWS?'none':'';
-  $('response-section').style.display=isWS?'none':'flex';
-  // Hide/show active request panel
-  if(isWS) $a('.rpanel').forEach(p=>p.style.visibility='hidden');
-  else $a('.rpanel').forEach(p=>p.style.visibility='');
+  $('gql-panel').style.display=isGQL?'flex':'none';
+  $('req-tabs').style.display=(isHTTP||isGQL)?'':'none';
+  $('resize-handle').style.display=(isHTTP||isGQL)?'':'none';
+  $('response-section').style.display=(isHTTP||isGQL)?'flex':'none';
+  // In GQL mode: hide all rpanels with display:none (GQL panel replaces the body area)
+  // In WS mode: visibility:hidden to preserve layout
+  // In HTTP mode: restore normally
+  if(isWS){
+    $a('.rpanel').forEach(p=>{ p.style.visibility='hidden'; p.style.display=''; });
+  } else if(isGQL){
+    $a('.rpanel').forEach(p=>{ p.style.display='none'; p.style.visibility=''; });
+    // Switch away from Body tab since GQL has its own query editor
+    const activeRTab=$q('.rtab.active');
+    if(!activeRTab||activeRTab.dataset.t==='body') switchReqTab('headers');
+    $q('.rtab[data-t="body"]')?.setAttribute('disabled','');
+  } else {
+    $a('.rpanel').forEach(p=>{ p.style.visibility=''; p.style.display=''; });
+    $q('.rtab[data-t="body"]')?.removeAttribute('disabled');
+    // Restore active rpanel
+    const activeRTab=$q('.rtab.active');
+    if(activeRTab) $a('.rpanel').forEach(p=>p.classList.toggle('active',p.id==='rpanel-'+activeRTab.dataset.t));
+  }
+  // GQL introspect button in URL bar
+  $('btn-gql-introspect').style.display=isGQL?'inline-block':'none';
   // Adjust URL bar buttons
   $('btn-send').style.display=isWS?'none':'';
   $('btn-cancel').style.display=isWS?'none':'';
   // Update URL placeholder
-  $('url-input').placeholder=isWS?'wss://echo.websocket.org':'https://api.example.com/endpoint';
+  $('url-input').placeholder=isWS?'wss://echo.websocket.org':isGQL?'https://api.example.com/graphql':'https://api.example.com/endpoint';
   if(!isWS&&WS.socket&&WS.socket.readyState<2) WS.socket.close();
 }
+
+function switchReqTab(name){
+  $a('.rtab').forEach(b=>b.classList.toggle('active',b.dataset.t===name));
+  $a('.rpanel').forEach(p=>p.classList.toggle('active',p.id==='rpanel-'+name));
+}
+
+// ── GraphQL Introspection ──
+const INTROSPECT_QUERY=`query IntrospectionQuery {
+  __schema {
+    types {
+      name kind
+      fields(includeDeprecated: false) {
+        name
+        type { name kind ofType { name kind ofType { name kind } } }
+      }
+    }
+    queryType { name }
+    mutationType { name }
+    subscriptionType { name }
+  }
+}`;
+
+let _gqlSchema=null; // parsed schema cache
+
+async function gqlIntrospect(){
+  saveUIToTab();
+  const tab=getActiveTab();
+  if(!tab||!tab.url.trim()){ toast('Enter the GraphQL endpoint URL first','err'); return; }
+  const btn=$('btn-gql-introspect');
+  const btn2=$('btn-introspect');
+  [btn,btn2].forEach(b=>{if(b){b.disabled=true;b.textContent='⟳ Fetching…';}});
+  $('gql-schema-empty').textContent='Fetching schema…';
+  try{
+    const url=resolveVars(tab.url);
+    const headers={'Content-Type':'application/json','Accept':'application/json'};
+    const auth=tab.auth||{};
+    if(auth.type==='bearer'&&auth.bearer) headers['Authorization']='Bearer '+resolveVars(auth.bearer);
+    else if(auth.type==='oauth2'&&auth.accessToken) headers['Authorization']='Bearer '+auth.accessToken;
+    else if(auth.type==='basic'&&auth.basicUser) headers['Authorization']='Basic '+btoa(auth.basicUser+':'+auth.basicPass);
+    const res=await fetch(url,{method:'POST',headers,body:JSON.stringify({query:INTROSPECT_QUERY})});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const json=await res.json();
+    if(json.errors) throw new Error(json.errors[0]?.message||'Introspection error');
+    const schema=json.data?.__schema;
+    if(!schema) throw new Error('No __schema in response');
+    _gqlSchema=schema;
+    renderSchemaTree(schema);
+    toast('Schema loaded','ok');
+  } catch(e){
+    $('gql-schema-empty').textContent='Failed: '+e.message;
+    $('gql-schema-empty').style.display='';
+    toast('Introspection failed: '+e.message,'err');
+  } finally{
+    [btn,btn2].forEach(b=>{if(b){b.disabled=false;b.textContent=b===btn?'⟳ Schema':'⟳ Fetch';}});
+  }
+}
+
+function renderSchemaTree(schema){
+  const body=$('gql-schema-body');
+  // Show root types first (Query, Mutation, Subscription), then other named types
+  const rootNames=new Set([
+    schema.queryType?.name,schema.mutationType?.name,schema.subscriptionType?.name
+  ].filter(Boolean));
+  // Filter out built-in introspection types
+  const types=(schema.types||[]).filter(t=>t.name&&!t.name.startsWith('__')&&t.kind!=='SCALAR'&&t.kind!=='ENUM');
+  const roots=types.filter(t=>rootNames.has(t.name));
+  const rest=types.filter(t=>!rootNames.has(t.name));
+  const sorted=[...roots,...rest];
+  body.innerHTML='';
+  if(!sorted.length){
+    const e=document.createElement('div');
+    e.id='gql-schema-empty';
+    e.textContent='No types found.';
+    body.appendChild(e);
+    return;
+  }
+  sorted.forEach(type=>{
+    const wrap=document.createElement('div');
+    const row=document.createElement('div');
+    row.className='gql-type-row';
+    const kindLabel=rootNames.has(type.name)?type.name==='Query'?'query':type.name==='Mutation'?'mutation':'subscription':type.kind.toLowerCase();
+    row.innerHTML=`<span class="arrow" style="font-size:9px">▶</span><span class="gql-type-name">${esc(type.name)}</span><span class="gql-type-kind">${kindLabel}</span>`;
+    const fieldsDiv=document.createElement('div');
+    fieldsDiv.className='gql-fields';
+    row.addEventListener('click',()=>{
+      const open=fieldsDiv.classList.toggle('open');
+      row.querySelector('.arrow').style.transform=open?'rotate(90deg)':'';
+    });
+    (type.fields||[]).forEach(f=>{
+      const fr=document.createElement('div');
+      fr.className='gql-field-row';
+      const typeName=unwrapGQLType(f.type);
+      fr.innerHTML=`${esc(f.name)}<span class="gql-field-type">${esc(typeName)}</span>`;
+      fr.title='Click to insert field into query';
+      fr.addEventListener('click',e=>{
+        e.stopPropagation();
+        insertGQLField(f.name);
+      });
+      fieldsDiv.appendChild(fr);
+    });
+    wrap.appendChild(row);
+    wrap.appendChild(fieldsDiv);
+    body.appendChild(wrap);
+  });
+}
+
+function unwrapGQLType(t){
+  if(!t) return '';
+  if(t.name) return t.name;
+  if(t.ofType) return unwrapGQLType(t.ofType);
+  return '';
+}
+
+function insertGQLField(fieldName){
+  const ta=$('gql-query');
+  const pos=ta.selectionStart;
+  const val=ta.value;
+  // Find the cursor line and insert the field name on a new indented line
+  const before=val.slice(0,pos);
+  const after=val.slice(pos);
+  const lineStart=before.lastIndexOf('\n')+1;
+  const currentLine=before.slice(lineStart);
+  const indent=currentLine.match(/^\s*/)[0]+'  ';
+  const insert='\n'+indent+fieldName;
+  ta.value=before+insert+after;
+  const newPos=pos+insert.length;
+  ta.setSelectionRange(newPos,newPos);
+  ta.focus();
+  markDirty();
+}
+
+(function bindExtract(){
+  $('btn-extract-toggle').onclick=toggleExtractPanel;
+  $('extract-path').addEventListener('input',updateExtractPreview);
+  $('extract-var-name').addEventListener('input',updateExtractPreview);
+  $('extract-var-name').addEventListener('keydown',e=>{ if(e.key==='Enter') doExtractVariable(); });
+  $('btn-extract-set').onclick=doExtractVariable;
+
+  // Update script label when scope changes
+  $('extract-scope').addEventListener('change',()=>{
+    const scope=$('extract-scope').value;
+    const label={environment:'pm.environment.set()',globals:'pm.globals.set()',collection:'pm.collectionVariables.set()'};
+    $('extract-add-script').nextElementSibling.innerHTML=
+      `Also add <code>${label[scope]||'pm.environment.set()'}</code> line to Tests script`;
+  });
+
+  // Click a JSON value in pretty view → populate path
+  $('res-body-pre').addEventListener('click',e=>{
+    if(!_extractActive) return;
+    const span=e.target.closest('.jv-click');
+    if(!span) return;
+    // Deselect previous
+    $q('.jv-selected',$('res-body-pre'))?.classList.remove('jv-selected');
+    span.classList.add('jv-selected');
+    const path=span.dataset.path||'';
+    $('extract-path').value=path;
+    // Pre-fill variable name from last segment of path
+    if(!$('extract-var-name').value){
+      const segs=path.replace(/\[(\d+)\]/g,'.$1').split('.').filter(Boolean);
+      const last=segs[segs.length-1]||'';
+      if(last&&!/^\d+$/.test(last)) $('extract-var-name').value=last;
+    }
+    updateExtractPreview();
+    $('extract-var-name').focus();
+  });
+})();
 
 (function bindWS(){
   $('btn-ws-connect').onclick=wsConnect;
@@ -4207,6 +4894,23 @@ function onMethodChange(){
   $('ws-msg-input').addEventListener('keydown',e=>{
     if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();wsSend();}
   });
+})();
+
+(function bindGQL(){
+  $('btn-gql-introspect').onclick=gqlIntrospect;
+  $('btn-introspect').onclick=gqlIntrospect;
+  // Variables toggle
+  $('gql-vars-toggle').addEventListener('click',()=>{
+    const body=$('gql-vars-body');
+    const arrow=$('gql-vars-toggle').querySelector('.arrow');
+    const open=body.style.display==='block';
+    body.style.display=open?'none':'block';
+    arrow.style.transform=open?'':'rotate(90deg)';
+  });
+  // Mark dirty on edits
+  $('gql-query').addEventListener('input',debounce(markDirty,400));
+  $('gql-vars').addEventListener('input',debounce(markDirty,400));
+  $('gql-op-name').addEventListener('input',debounce(markDirty,400));
 })();
 
 // ── Cookie Manager ──
@@ -4440,7 +5144,17 @@ function loadShareLibs(){
   });
 }
 
-init();
+// OAuth 2.0 popup callback — if this page is the redirect_uri inside a popup,
+// send the code back to the opener and close without initialising the full app.
+(function checkOAuthCallback(){
+  const p=new URLSearchParams(location.search);
+  if((p.get('code')||p.get('error'))&&window.opener){
+    try{ window.opener.postMessage({type:'np_oauth_callback',href:location.href},'*'); }catch{}
+    setTimeout(()=>window.close(),300);
+    return;
+  }
+  init();
+})();
 </script>
 </body>
 </html>

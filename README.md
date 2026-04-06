@@ -19,10 +19,11 @@ NakliPoster is the escape route. Everything runs in the browser — your request
 ## Features
 
 ### Core API Client
-- HTTP methods: GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, **WS (WebSocket)**
+- HTTP methods: GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, **WS (WebSocket)**, **GQL (GraphQL)**
 - URL bar with `{{variable}}` interpolation
 - Params, Headers, Body (JSON / XML / text / form-data / urlencoded)
-- Auth: Bearer token, Basic, API Key
+- Auth: Bearer token, Basic, API Key, **OAuth 2.0** (Authorization Code + Client Credentials)
+- **GraphQL** — dedicated query editor, variables panel, operation name; schema explorer via introspection (⟳ Schema); sends standard `POST {query, variables, operationName}` body; auth and headers work normally
 - Syntax-highlighted response viewer (Pretty / Raw / Preview)
 - Multiple tabs, session restored on reload
 - Request history with full-text search
@@ -42,6 +43,7 @@ NakliPoster is the escape route. Everything runs in the browser — your request
 - Pre-request scripts — run JS before each request (variable manipulation, dynamic auth)
 - Test scripts — Chai-style assertions (`pm.expect(res.json().id).to.be.a('number')`)
 - Collection Runner — execute all requests in a collection sequentially with variable chaining
+- **Response variable extraction** — click any JSON value in the response to set it as an environment variable, no scripting required; optionally auto-appends `pm.environment.set()` to the Tests script for the runner
 
 ### AI Assistant
 Context-aware AI — knows your active request, last response, and environment variables.
