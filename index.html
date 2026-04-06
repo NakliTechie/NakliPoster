@@ -1576,6 +1576,14 @@ function renderTabs(){
 
 function switchTab(id){
   saveUIToTab();
+  if(ai.history.length){
+    ai.history=[];
+    sessionStorage.removeItem('np_ai_history');
+    const t=getTab(id);
+    const label=t?.name||(t?.url?t.url.replace(/^https?:\/\//,'').slice(0,40):'New Request');
+    const msgs=$('ai-messages');
+    if(msgs){ const d=document.createElement('div'); d.className='ai-divider'; d.textContent=label; msgs.appendChild(d); msgs.scrollTop=9999; }
+  }
   S.activeTabId=id;
   lsSet(LS.activeTab,id);
   renderTabs();
@@ -3567,6 +3575,21 @@ function makeAIWorker(){
   return new Worker(URL.createObjectURL(blob),{type:'module'});
 }
 
+async function isModelCached(modelId){
+  const names=await caches.keys();
+  for(const name of names){
+    const c=await caches.open(name);
+    const keys=await c.keys();
+    if(keys.some(r=>r.url.includes(modelId))) return true;
+  }
+  return false;
+}
+
+function aiHistoryPush(msg){
+  ai.history.push(msg);
+  sessionStorage.setItem('np_ai_history',JSON.stringify(ai.history));
+}
+
 function aiSetStatus(msg,cls=''){
   const el=$('ai-status');
   el.textContent=msg;
@@ -3660,7 +3683,7 @@ function aiFinalize(wrap,content){
     $('prescript-editor').value=content; markDirty(); toast('Inserted into Pre-req tab','ok');
   });
   wrap.appendChild(acts);
-  ai.history.push({role:'assistant',content});
+  aiHistoryPush({role:'assistant',content});
 }
 
 async function aiSend(overrideMsg){
@@ -3674,7 +3697,7 @@ async function aiSend(overrideMsg){
   ai.streaming=true;
   $('ai-send').disabled=true;
   $('ai-stop').style.display='';
-  ai.history.push({role:'user',content:userMsg});
+  aiHistoryPush({role:'user',content:userMsg});
   aiAddBubble('user',userMsg);
   const messages=buildAIMessages(userMsg);
   const {wrap,bid}=aiAddBubble('assistant','');
@@ -3928,7 +3951,11 @@ function init(){
   // Restore AI panel state (open by default)
   if(lsGet(LS_AI_OPEN,true)) toggleAIPanel();
   const lastAIModel=localStorage.getItem(LS_AI_MODEL);
-  if(lastAIModel&&AI_MODELS[lastAIModel]) $('ai-model-id').value=lastAIModel;
+  if(lastAIModel&&AI_MODELS[lastAIModel]){
+    $('ai-model-id').value=lastAIModel;
+    isModelCached(AI_MODELS[lastAIModel].id).then(cached=>{ if(cached) loadAIModel(); });
+  }
+  try{ const h=sessionStorage.getItem('np_ai_history'); if(h) ai.history=JSON.parse(h); }catch{}
 
   // Status bar workspace
   if(S.dirHandle) $('sb-ws').textContent=`📁 ${S.dirHandle.name}`;
