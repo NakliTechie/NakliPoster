@@ -2011,14 +2011,25 @@ function getActiveEnvVars(){
   (env.variables||[]).forEach(v=>{ if(v.key) out[v.key]=v.value||''; });
   return out;
 }
+function getCollVars(collId){
+  if(!collId) return {};
+  const coll=S.collections.find(c=>c.id===collId);
+  if(!coll||!coll.variable) return {};
+  const out={};
+  coll.variable.forEach(v=>{ if(v.key) out[v.key]=v.value||''; });
+  return out;
+}
+let _resolveCollId=null; // set by buildRequest / runner for current collection context
 function resolveVars(str){
   if(!str) return str;
   const env=getActiveEnvVars();
-  return str.replace(/\{\{(\w+)\}\}/g,(m,k)=>S.globals[k]??env[k]??m);
+  const cv=getCollVars(_resolveCollId);
+  return str.replace(/\{\{(\w+)\}\}/g,(m,k)=>S.globals[k]??cv[k]??env[k]??m);
 }
 
 // ── Build Request ──
 function buildRequest(tab){
+  _resolveCollId=tab.collId||tab._collId||null;
   const method=tab.method||'GET';
   const url=resolveVars(tab.url||'');
   const headers={};
@@ -2644,7 +2655,7 @@ function renderItems(items, container, coll, filter){
         +`<button class="coll-act" data-act="doc-ai" data-cid="${coll.id}" data-iid="${item.id}" title="Document with AI">✦</button>`
         +`<button class="coll-act danger" data-act="del-item" data-cid="${coll.id}" data-iid="${item.id}">✕</button>`
         +`</span>`;
-      rd.onclick=e=>{ if(e.target.closest('.coll-act')) return; openCollItem(item); };
+      rd.onclick=e=>{ if(e.target.closest('.coll-act')) return; item._collId=coll.id; openCollItem(item); };
       rd.querySelectorAll('.coll-act').forEach(btn=>btn.onclick=e=>{ e.stopPropagation(); handleCollAct(btn); });
       container.appendChild(rd);
     }
