@@ -2864,7 +2864,21 @@ function saveCollVarsFromUI(){
   if(_cvMode==='json'){
     try{
       let parsed=JSON.parse($('cv-json-text').value);
-      if(!Array.isArray(parsed)){ if(parsed.variable) parsed=parsed.variable; else throw 0; }
+      // Full collection pasted — merge everything in
+      if(!Array.isArray(parsed)&&(parsed.item||parsed.variable)){
+        const imported=pmToInternal(parsed);
+        if(imported.items?.length) coll.items=imported.items;
+        coll.variable=imported.variable||[];
+        if(imported.info?.name&&(!coll.info?.name||coll.info.name==='New Collection'))
+          coll.info={...coll.info,...imported.info};
+        saveCollections();
+        saveCollToFS(coll);
+        renderCollectionTree();
+        toast(`Imported: ${coll.info?.name||'Collection'} (${(coll.items||[]).length} folders, ${(coll.variable||[]).length} variables)`,'ok');
+        closeModal();
+        return;
+      }
+      if(!Array.isArray(parsed)) throw 0;
       coll.variable=parsed.map(v=>({key:v.key||'',value:v.value||'',enabled:true}));
     }catch{ toast('Invalid JSON','err'); return; }
   } else {
