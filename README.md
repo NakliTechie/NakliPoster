@@ -45,6 +45,12 @@ NakliPoster is the escape route. Everything runs in the browser — your request
 - Collection Runner — execute all requests in a collection sequentially with variable chaining
 - **Response variable extraction** — click any JSON value in the response to set it as an environment variable, no scripting required; optionally auto-appends `pm.environment.set()` to the Tests script for the runner
 
+### JavaScript API
+- Optional `window.nakliposter` API for scripting and cross-tab collection injection (enable in Settings → Developer)
+- `importCollection(json)` — inject a Postman v2.1 or OpenAPI collection programmatically
+- `listCollections()` — enumerate loaded collections
+- `exportCollection(id)` — retrieve a collection as Postman v2.1 JSON
+
 ### AI Assistant
 Context-aware AI — knows your active request, last response, and environment variables.
 
@@ -121,6 +127,7 @@ Public APIs and well-configured developer APIs generally work without issue.
 | Collaboration | lz-string + AES-256-GCM via Web Crypto API |
 | Git history | isomorphic-git (lazy-loaded from CDN, ~220KB cached) |
 | AI inference | Transformers.js v4 via WebGPU |
+| Scripting API | `window.nakliposter` — opt-in, same-tab, frozen object |
 | Syntax highlighting | Custom JSON highlighter (zero CDN dependency) |
 | CDN deps (lazy-loaded) | lz-string, qrcodejs — only loaded when sharing |
 
