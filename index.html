@@ -1497,7 +1497,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       </ul>
       <h3>Bookmarklet — Send to NakliPoster</h3>
       <p>Drag this link to your bookmarks bar:</p>
-      <p><a id="np-bookmarklet" href="javascript:void(function(){var t=window.getSelection().toString()||document.body.innerText;try{var j=JSON.parse(t),w=window.open('https://nakliposter.naklitechie.com','nakliposter');var n=0,iv=setInterval(function(){w.postMessage({type:'np_import',collection:j},'*');if(++n>30)clearInterval(iv)},500)}catch(e){alert('No valid JSON selected')}}())" style="background:var(--accent);color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-weight:600;cursor:grab">Send to NakliPoster</a></p>
+      <p><a id="np-bookmarklet" href="#" style="background:var(--accent);color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-weight:600;cursor:grab">Send to NakliPoster</a></p>
       <p style="font-size:12px;color:var(--text-secondary)">On any page with a Postman collection JSON: select the JSON text, click the bookmarklet. It opens NakliPoster and imports the collection automatically. The API toggle must be enabled.</p>
       <p style="font-size:11px;color:var(--text-muted)">Don't see a bookmarks bar? Press <strong>⌘⇧B</strong> (Mac) or <strong>Ctrl+Shift+B</strong> (Windows/Linux) to show it, then drag the button above.</p>
     </div>
@@ -4521,6 +4521,10 @@ function init(){
 
   // JS API
   if(S.settings.apiEnabled) attachNakliPosterAPI();
+
+  // Bookmarklet — bake in the current origin so it works wherever NakliPoster is hosted
+  const npUrl = location.origin + location.pathname;
+  $('np-bookmarklet').href = "javascript:void(function(){var t=window.getSelection().toString()||document.body.innerText;try{var j=JSON.parse(t),w=window.open('"+npUrl+"','nakliposter');var n=0,iv=setInterval(function(){w.postMessage({type:'np_import',collection:j},'*');if(++n>30)clearInterval(iv)},500)}catch(e){alert('No valid JSON selected')}}())";
 
   // Load CDN libs then check for share link in fragment
   loadShareLibs().then(()=>checkShareLink());
