@@ -1498,7 +1498,8 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       <h3>Bookmarklet — Send to NakliPoster</h3>
       <p>Drag this link to your bookmarks bar:</p>
       <p><a id="np-bookmarklet" href="#" style="background:var(--accent);color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-weight:600;cursor:grab">Send to NakliPoster</a></p>
-      <p style="font-size:12px;color:var(--text-secondary)">On any page with a Postman collection JSON: select the JSON text, click the bookmarklet. It opens NakliPoster and imports the collection automatically. The API toggle must be enabled.</p>
+      <p style="font-size:12px;color:var(--text-secondary)">On any page with a Postman collection JSON: select the JSON text, click the bookmarklet. It opens NakliPoster and imports the collection automatically.</p>
+      <p style="font-size:12px;color:var(--s4xx);font-weight:600">You must enable the JavaScript API toggle in Settings → Developer for this to work. The setting is remembered across sessions.</p>
       <p style="font-size:11px;color:var(--text-muted)">Don't see a bookmarks bar? Press <strong>⌘⇧B</strong> (Mac) or <strong>Ctrl+Shift+B</strong> (Windows/Linux) to show it, then drag the button above.</p>
     </div>
 
@@ -5257,9 +5258,14 @@ function detachNakliPosterAPI() {
   try { delete window.nakliposter; } catch {}
 }
 
-// Cross-tab postMessage listener — always active (bookmarklet is the opt-in gesture)
+// Cross-tab postMessage listener — nudges user to enable the API if off
 window.addEventListener('message', (e) => {
   const d = e.data;
+  if (d?.type === 'np_import' && !d.collection) return;
+  if (d?.type === 'np_import' && !S.settings.apiEnabled) {
+    toast('Collection received — enable JavaScript API in Settings → Developer to allow imports', 'err', 5000);
+    return;
+  }
   if (d?.type === 'np_import' && d.collection) {
     try {
       const result = nakliposterAPI.importCollection(d.collection);
