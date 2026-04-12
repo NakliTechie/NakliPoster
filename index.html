@@ -5257,9 +5257,8 @@ function detachNakliPosterAPI() {
   try { delete window.nakliposter; } catch {}
 }
 
-// Cross-tab postMessage listener — accepts collections from bookmarklets / other tabs
+// Cross-tab postMessage listener — always active (bookmarklet is the opt-in gesture)
 window.addEventListener('message', (e) => {
-  if (!S.settings.apiEnabled) return;
   const d = e.data;
   if (d?.type === 'np_import' && d.collection) {
     try {
