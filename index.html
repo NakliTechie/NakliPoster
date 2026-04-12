@@ -1487,6 +1487,18 @@ mark{background:transparent;color:var(--accent);font-weight:600}
         <li>Click <strong>Restore</strong> to replace the current collection with that version. The file is written to disk immediately.</li>
       </ul>
       <p style="font-size:12px;color:var(--text-muted)">isomorphic-git (~220 KB) is loaded from CDN on first use and cached. No install required.</p>
+
+      <h3>JavaScript API</h3>
+      <p>Enable in <strong>Settings → Developer</strong> to expose <code>window.nakliposter</code> for scripting and cross-tab collection injection.</p>
+      <ul>
+        <li><code>importCollection(json)</code> — import a Postman v2.1 or OpenAPI collection</li>
+        <li><code>listCollections()</code> — list all loaded collections</li>
+        <li><code>exportCollection(id)</code> — export a collection as Postman v2.1 JSON</li>
+      </ul>
+      <h3>Bookmarklet — Send to NakliPoster</h3>
+      <p>Drag this link to your bookmarks bar:</p>
+      <p><a id="np-bookmarklet" href="javascript:void(function(){var t=window.getSelection().toString()||document.body.innerText;try{var j=JSON.parse(t),w=window.open(location.origin!=='null'?location.origin:'https://nakliposter.naklitechie.com','nakliposter');var n=0,iv=setInterval(function(){w.postMessage({type:'np_import',collection:j},'*');if(++n>30)clearInterval(iv)},500)}catch(e){alert('No valid JSON selected')}}())" style="background:var(--accent);color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-weight:600;cursor:grab">Send to NakliPoster</a></p>
+      <p style="font-size:12px;color:var(--text-secondary)">On any page with a Postman collection JSON: select the JSON text, click the bookmarklet. It opens NakliPoster and imports the collection automatically. The API toggle must be enabled.</p>
     </div>
 
     <div class="modal-footer">
@@ -5239,6 +5251,20 @@ function attachNakliPosterAPI() {
 function detachNakliPosterAPI() {
   try { delete window.nakliposter; } catch {}
 }
+
+// Cross-tab postMessage listener — accepts collections from bookmarklets / other tabs
+window.addEventListener('message', (e) => {
+  if (!S.settings.apiEnabled) return;
+  const d = e.data;
+  if (d?.type === 'np_import' && d.collection) {
+    try {
+      const result = nakliposterAPI.importCollection(d.collection);
+      e.source?.postMessage({ type: 'np_import_ack', ...result }, '*');
+    } catch (err) {
+      e.source?.postMessage({ type: 'np_import_err', error: err.message }, '*');
+    }
+  }
+});
 
 // OAuth 2.0 popup callback — if this page is the redirect_uri inside a popup,
 // send the code back to the opener and close without initialising the full app.
