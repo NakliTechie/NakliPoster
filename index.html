@@ -82,6 +82,10 @@ button{cursor:pointer;font-family:inherit}
   border-radius:3px;font-size:11px;line-height:1.4}
 .coll-act:hover{background:var(--border);color:var(--text-primary)}
 .coll-act.danger:hover{color:var(--s4xx)}
+.coll-confirm{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--s4xx);animation:fadeIn .15s}
+.coll-confirm button{background:var(--s4xx);color:#fff;border:none;border-radius:3px;padding:1px 6px;font-size:10px;cursor:pointer}
+.coll-confirm button.cc-no{background:var(--bg-input);color:var(--text-secondary)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .arrow{font-size:9px;color:var(--text-muted);width:10px;flex-shrink:0;transition:transform .15s}
 .arrow.open{transform:rotate(90deg)}
 .method-tag{font-size:9px;font-weight:700;padding:1px 4px;border-radius:2px;flex-shrink:0;text-transform:uppercase}
@@ -2649,11 +2653,27 @@ function renderItems(items, container, coll, filter){
 function handleCollAct(btn){
   const act=btn.dataset.act, cid=btn.dataset.cid, iid=btn.dataset.iid;
   if(act==='del-coll'){
-    if(!confirm('Delete this collection?')) return;
-    S.collections=S.collections.filter(c=>c.id!==cid);
-    saveCollections();
-    renderCollectionTree();
-    toast('Collection deleted');
+    // Inline confirmation next to the button
+    const existing = btn.parentElement.querySelector('.coll-confirm');
+    if (existing) { existing.remove(); return; }
+    const cf = document.createElement('span');
+    cf.className = 'coll-confirm';
+    cf.innerHTML = 'Delete? <button class="cc-yes">Yes</button><button class="cc-no">No</button>';
+    btn.parentElement.appendChild(cf);
+    cf.querySelector('.cc-no').onclick = (ev) => { ev.stopPropagation(); cf.remove(); };
+    cf.querySelector('.cc-yes').onclick = (ev) => {
+      ev.stopPropagation();
+      const coll = S.collections.find(c => c.id === cid);
+      if (coll) {
+        if (coll.info?._postman_id) _dismissedImports.add('pid:' + coll.info._postman_id);
+        if (coll.info?.name) _dismissedImports.add('name:' + coll.info.name);
+      }
+      S.collections = S.collections.filter(c => c.id !== cid);
+      saveCollections();
+      renderCollectionTree();
+      toast('Collection deleted');
+    };
+    return;
   } else if(act==='share-coll'){
     const coll=S.collections.find(c=>c.id===cid);
     if(coll) openShareModal('collection', null, coll.id);
@@ -5205,6 +5225,7 @@ function loadShareLibs(){
 }
 
 // ── JavaScript API (window.nakliposter) ──
+const _dismissedImports = new Set(); // tracks deleted collection names/ids to block re-import via postMessage
 const nakliposterAPI = Object.freeze({
   version: '1.0',
 
@@ -5267,9 +5288,13 @@ window.addEventListener('message', (e) => {
     return;
   }
   if (d?.type === 'np_import' && d.collection) {
-    // Dedup: skip if same _postman_id or same name already exists
+    // Dedup: skip if same _postman_id or name exists OR was recently deleted
     const inName = d.collection.info?.name;
     const inPmId = d.collection.info?._postman_id;
+    if ((inPmId && _dismissedImports.has('pid:'+inPmId)) || (inName && _dismissedImports.has('name:'+inName))) {
+      e.source?.postMessage({ type: 'np_import_ack', dedup: true }, '*');
+      return;
+    }
     const dup = S.collections.find(c =>
       (inPmId && c.info?._postman_id === inPmId) ||
       (inName && c.info?.name === inName)
