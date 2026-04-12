@@ -4525,7 +4525,7 @@ function init(){
 
   // Bookmarklet — bake in the current origin so it works wherever NakliPoster is hosted
   const npUrl = location.origin + location.pathname;
-  $('np-bookmarklet').href = "javascript:void(function(){var t=window.getSelection().toString()||document.body.innerText;try{var j=JSON.parse(t),w=window.open('"+npUrl+"','nakliposter');var n=0,iv=setInterval(function(){w.postMessage({type:'np_import',collection:j},'*');if(++n>30)clearInterval(iv)},500)}catch(e){alert('No valid JSON selected')}}())";
+  $('np-bookmarklet').href = "javascript:void(function(){var t=window.getSelection().toString()||document.body.innerText;try{var j=JSON.parse(t),w=window.open('"+npUrl+"','nakliposter');var n=0,iv=setInterval(function(){w.postMessage({type:'np_import',collection:j},'*');if(++n>30)clearInterval(iv)},500);window.addEventListener('message',function h(e){if(e.data&&(e.data.type==='np_import_ack'||e.data.type==='np_import_err')){clearInterval(iv);window.removeEventListener('message',h)}})}catch(e){alert('No valid JSON selected')}}())";
 
   // Load CDN libs then check for share link in fragment
   loadShareLibs().then(()=>checkShareLink());
@@ -5267,6 +5267,17 @@ window.addEventListener('message', (e) => {
     return;
   }
   if (d?.type === 'np_import' && d.collection) {
+    // Dedup: skip if same _postman_id or same name already exists
+    const inName = d.collection.info?.name;
+    const inPmId = d.collection.info?._postman_id;
+    const dup = S.collections.find(c =>
+      (inPmId && c.info?._postman_id === inPmId) ||
+      (inName && c.info?.name === inName)
+    );
+    if (dup) {
+      e.source?.postMessage({ type: 'np_import_ack', id: dup.id, name: dup.info?.name, dedup: true }, '*');
+      return;
+    }
     try {
       const result = nakliposterAPI.importCollection(d.collection);
       e.source?.postMessage({ type: 'np_import_ack', ...result }, '*');
