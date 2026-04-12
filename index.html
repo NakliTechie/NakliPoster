@@ -2848,9 +2848,9 @@ function switchCvMode(mode){
   } else if(mode==='editor'&&_cvMode==='json'){
     // sync JSON → editor
     try{
-      const arr=JSON.parse($('cv-json-text').value);
-      if(!Array.isArray(arr)) throw 0;
-      renderKV('coll-vars-kv', arr.map(v=>({key:v.key||'',value:v.value||'',enabled:true})));
+      let parsed=JSON.parse($('cv-json-text').value);
+      if(!Array.isArray(parsed)){ if(parsed.variable) parsed=parsed.variable; else throw 0; }
+      renderKV('coll-vars-kv', parsed.map(v=>({key:v.key||'',value:v.value||'',enabled:true})));
     }catch{ toast('Invalid JSON — fix it or switch back','err'); return; }
   }
   _cvMode=mode;
@@ -2863,9 +2863,9 @@ function saveCollVarsFromUI(){
   if(!coll) return;
   if(_cvMode==='json'){
     try{
-      const arr=JSON.parse($('cv-json-text').value);
-      if(!Array.isArray(arr)) throw 0;
-      coll.variable=arr.map(v=>({key:v.key||'',value:v.value||'',enabled:true}));
+      let parsed=JSON.parse($('cv-json-text').value);
+      if(!Array.isArray(parsed)){ if(parsed.variable) parsed=parsed.variable; else throw 0; }
+      coll.variable=parsed.map(v=>({key:v.key||'',value:v.value||'',enabled:true}));
     }catch{ toast('Invalid JSON','err'); return; }
   } else {
     coll.variable=getKV('coll-vars-kv');
