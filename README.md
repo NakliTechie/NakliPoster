@@ -45,11 +45,13 @@ NakliPoster is the escape route. Everything runs in the browser — your request
 - Collection Runner — execute all requests in a collection sequentially with variable chaining
 - **Response variable extraction** — click any JSON value in the response to set it as an environment variable, no scripting required; optionally auto-appends `pm.environment.set()` to the Tests script for the runner
 
-### JavaScript API
+### JavaScript API & Cross-Tab Injection
 - Optional `window.nakliposter` API for scripting and cross-tab collection injection (enable in Settings → Developer)
 - `importCollection(json)` — inject a Postman v2.1 or OpenAPI collection programmatically
 - `listCollections()` — enumerate loaded collections
 - `exportCollection(id)` — retrieve a collection as Postman v2.1 JSON
+- **Cross-tab `postMessage` listener** — other tabs or bookmarklets can push collections into NakliPoster without switching tabs
+- **"Send to NakliPoster" bookmarklet** — drag from Help → Others to your bookmarks bar. Select collection JSON on any page, click the bookmarklet, and it opens NakliPoster and imports automatically
 
 ### AI Assistant
 Context-aware AI — knows your active request, last response, and environment variables.
@@ -127,7 +129,7 @@ Public APIs and well-configured developer APIs generally work without issue.
 | Collaboration | lz-string + AES-256-GCM via Web Crypto API |
 | Git history | isomorphic-git (lazy-loaded from CDN, ~220KB cached) |
 | AI inference | Transformers.js v4 via WebGPU |
-| Scripting API | `window.nakliposter` — opt-in, same-tab, frozen object |
+| Scripting API | `window.nakliposter` — opt-in frozen object + cross-tab `postMessage` listener |
 | Syntax highlighting | Custom JSON highlighter (zero CDN dependency) |
 | CDN deps (lazy-loaded) | lz-string, qrcodejs — only loaded when sharing |
 
@@ -143,6 +145,7 @@ A few things are worth understanding if you intend to trust the tool with real c
 - **Pre-request and test scripts run as real JavaScript in this page.** A malicious script can read every environment variable (including secret-tagged ones), every saved request, and every token in storage — then send them anywhere. **Only paste scripts from sources you trust.** Treat a `pm` script the same way you'd treat `eval()` on your credentials. If the AI Assistant generates a test script, read it before accepting it.
 - **Imports don't carry scripts.** Postman collection imports and NakliPoster share links deliberately strip pre-request and test scripts on the way in, so a shared collection cannot smuggle code into your browser. Scripts only ever exist on tabs you've authored yourself.
 - **Share links are client-encrypted.** Optional passphrase protection uses AES-256-GCM via Web Crypto. Tabs with stored credentials show a warning before sharing; secret-tagged environment variables are excluded from shared links by default.
+- **The JavaScript API is opt-in and same-origin.** `window.nakliposter` only exists when you enable it in Settings → Developer. The cross-tab `postMessage` listener only processes `np_import` messages when the API is enabled. Imported collections go through the same `pmToInternal()` parser as manual imports — no script execution, no eval.
 - **No auto-updates and no remote code.** The tool is one static HTML file. Two small libraries (`lz-string`, `qrcodejs`) are lazy-loaded from a CDN only when you use sharing; everything else, including the syntax highlighter, is inline.
 
 If you find a security issue, please open an issue at [github.com/NakliTechie/NakliPoster](https://github.com/NakliTechie/NakliPoster).
