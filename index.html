@@ -1067,8 +1067,17 @@ mark{background:transparent;color:var(--accent);font-weight:600}
   <div class="modal" id="modal-coll-vars" style="display:none">
     <div class="modal-hdr"><span class="modal-title" id="coll-vars-title">Collection Variables</span><button class="modal-x" data-mc="coll-vars">×</button></div>
     <div class="modal-body">
-      <div class="kv-wrap" id="coll-vars-kv"></div>
-      <button class="add-row-btn" id="btn-add-coll-var">+ Add Variable</button>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button class="lang-btn cv-mode active" data-cv="editor">Editor</button>
+        <button class="lang-btn cv-mode" data-cv="json">JSON</button>
+      </div>
+      <div id="cv-editor-view">
+        <div class="kv-wrap" id="coll-vars-kv"></div>
+        <button class="add-row-btn" id="btn-add-coll-var">+ Add Variable</button>
+      </div>
+      <div id="cv-json-view" style="display:none">
+        <textarea id="cv-json-text" rows="10" style="width:100%;font-family:var(--font-mono);font-size:12px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:8px;resize:vertical" placeholder='[{"key":"base_url","value":"https://..."}]'></textarea>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" data-mc="coll-vars">Close</button>
@@ -2819,16 +2828,48 @@ function saveGlobalsFromUI(){
   saveEnvironments();
 }
 let _collVarsCollId=null;
+let _cvMode='editor';
 function openCollVarsModal(coll){
   _collVarsCollId=coll.id;
+  _cvMode='editor';
   $('coll-vars-title').textContent='Variables — '+(coll.info?.name||'Collection');
   renderKV('coll-vars-kv', coll.variable||[]);
+  $('cv-editor-view').style.display='';
+  $('cv-json-view').style.display='none';
+  $a('.cv-mode').forEach(b=>b.classList.toggle('active',b.dataset.cv==='editor'));
   openModal('coll-vars');
+}
+function switchCvMode(mode){
+  const coll=S.collections.find(c=>c.id===_collVarsCollId);
+  if(mode==='json'&&_cvMode==='editor'){
+    // sync editor → JSON
+    const rows=getKV('coll-vars-kv').filter(r=>r.key);
+    $('cv-json-text').value=JSON.stringify(rows.map(r=>({key:r.key,value:r.value})),null,2);
+  } else if(mode==='editor'&&_cvMode==='json'){
+    // sync JSON → editor
+    try{
+      const arr=JSON.parse($('cv-json-text').value);
+      if(!Array.isArray(arr)) throw 0;
+      renderKV('coll-vars-kv', arr.map(v=>({key:v.key||'',value:v.value||'',enabled:true})));
+    }catch{ toast('Invalid JSON — fix it or switch back','err'); return; }
+  }
+  _cvMode=mode;
+  $('cv-editor-view').style.display=mode==='editor'?'':'none';
+  $('cv-json-view').style.display=mode==='json'?'':'none';
+  $a('.cv-mode').forEach(b=>b.classList.toggle('active',b.dataset.cv===mode));
 }
 function saveCollVarsFromUI(){
   const coll=S.collections.find(c=>c.id===_collVarsCollId);
   if(!coll) return;
-  coll.variable=getKV('coll-vars-kv');
+  if(_cvMode==='json'){
+    try{
+      const arr=JSON.parse($('cv-json-text').value);
+      if(!Array.isArray(arr)) throw 0;
+      coll.variable=arr.map(v=>({key:v.key||'',value:v.value||'',enabled:true}));
+    }catch{ toast('Invalid JSON','err'); return; }
+  } else {
+    coll.variable=getKV('coll-vars-kv');
+  }
   saveCollections();
   saveCollToFS(coll);
   toast('Variables saved','ok');
@@ -3371,6 +3412,7 @@ function bindEvents(){
   $('btn-add-global').onclick=()=>addKVRow('globals-kv',()=>saveGlobalsFromUI());
   $('btn-add-coll-var').onclick=()=>addKVRow('coll-vars-kv');
   $('btn-save-coll-vars').onclick=saveCollVarsFromUI;
+  $a('.cv-mode').forEach(b=>b.onclick=()=>switchCvMode(b.dataset.cv));
 
   // Settings
   $('btn-settings-open').onclick=$('btn-settings-sb').onclick=openSettingsModal;
