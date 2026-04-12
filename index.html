@@ -1037,6 +1037,10 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       <div class="settings-h3">Request</div>
       <div class="srow"><label>Timeout (ms)</label><input type="number" id="s-timeout" min="1000" max="300000" value="30000"></div>
       <div class="srow"><label>Follow Redirects</label><input type="checkbox" id="s-redirects" checked style="accent-color:var(--accent)"></div>
+      <div class="settings-h3">Developer</div>
+      <div class="srow"><label>JavaScript API <span style="font-weight:400;color:var(--text-secondary)">(experimental)</span></label>
+        <input type="checkbox" id="s-api" style="accent-color:var(--accent)"></div>
+      <div style="font-size:11px;color:var(--text-secondary);padding:2px 0 0 2px">Expose <code style="background:var(--bg-input);padding:1px 4px;border-radius:3px">window.nakliposter</code> for scripting &amp; cross-tab injection</div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" data-mc="settings">Close</button>
@@ -1569,7 +1573,7 @@ const S = window.S = {
   abortCtrl: null,
   history: [],
   cookies: [],
-  settings: { theme:'dark', fontSize:13, jsonIndent:2, timeout:30000, followRedirects:true },
+  settings: { theme:'dark', fontSize:13, jsonIndent:2, timeout:30000, followRedirects:true, apiEnabled:false },
 };
 
 function mkReqState(o={}){
@@ -1614,8 +1618,10 @@ function saveSettings(){
   s.jsonIndent = +$('s-indent').value || 2;
   s.timeout  = +$('s-timeout').value || 30000;
   s.followRedirects = $('s-redirects').checked;
+  s.apiEnabled = $('s-api').checked;
   lsSet(LS.settings, s);
   applySettings();
+  if(s.apiEnabled) attachNakliPosterAPI(); else detachNakliPosterAPI();
   toast('Settings saved', 'ok');
   closeModal();
 }
@@ -1626,6 +1632,7 @@ function openSettingsModal(){
   $('s-indent').value = s.jsonIndent;
   $('s-timeout').value = s.timeout;
   $('s-redirects').checked = s.followRedirects;
+  $('s-api').checked = !!s.apiEnabled;
   openModal('settings');
 }
 
@@ -4499,6 +4506,9 @@ function init(){
     if(S.settings.theme==='system') applyTheme('system');
   });
 
+  // JS API
+  if(S.settings.apiEnabled) attachNakliPosterAPI();
+
   // Load CDN libs then check for share link in fragment
   loadShareLibs().then(()=>checkShareLink());
 }
@@ -5174,6 +5184,60 @@ function loadShareLibs(){
     lz.onerror=resolve;
     document.head.appendChild(lz);
   });
+}
+
+// ── JavaScript API (window.nakliposter) ──
+const nakliposterAPI = Object.freeze({
+  version: '1.0',
+
+  /** Import a Postman Collection v2.1 JSON object */
+  importCollection(json) {
+    if (!json || typeof json !== 'object') throw new Error('Expected a JSON object');
+    let coll;
+    if (json.openapi || json.swagger) {
+      coll = parseOpenAPI(json);
+    } else {
+      coll = pmToInternal(json);
+    }
+    coll._open = true;
+    S.collections.push(coll);
+    saveCollections();
+    saveCollToFS(coll);
+    renderCollectionTree();
+    const name = coll.info?.name || 'Collection';
+    toast(`API: Imported "${name}"`, 'ok');
+    return { id: coll.id, name };
+  },
+
+  /** List all loaded collections */
+  listCollections() {
+    return S.collections.map(c => ({
+      id: c.id,
+      name: c.info?.name || 'Untitled',
+      items: (c.items || []).length,
+    }));
+  },
+
+  /** Export a collection as Postman v2.1 JSON */
+  exportCollection(id) {
+    const coll = S.collections.find(c => c.id === id);
+    if (!coll) throw new Error(`Collection "${id}" not found`);
+    return internalToPm(coll);
+  },
+});
+
+function attachNakliPosterAPI() {
+  try {
+    Object.defineProperty(window, 'nakliposter', {
+      value: nakliposterAPI,
+      writable: false,
+      configurable: true,
+      enumerable: false,
+    });
+  } catch (e) { console.error('Could not attach window.nakliposter:', e); }
+}
+function detachNakliPosterAPI() {
+  try { delete window.nakliposter; } catch {}
 }
 
 // OAuth 2.0 popup callback — if this page is the redirect_uri inside a popup,
