@@ -133,6 +133,12 @@ Public APIs and well-configured developer APIs generally work without issue.
 | Syntax highlighting | Custom JSON highlighter (zero CDN dependency) |
 | CDN deps (lazy-loaded) | lz-string, qrcodejs — only loaded when sharing |
 
+## Palette
+
+Coloured with **`india_east-12 · KANCHENJUNGA PRE-DAWN`** — first light from Tiger Hill on the world's third-highest mountain, never summited out of respect. Pre-dawn navy-black body, saffron ink, peachy-amber accent — the late-night-API-debug session as it tips over into morning. (HTTP method colours and JSON-syntax highlights stay literal — they're a developer-conventions API.)
+
+Palette pulled from [**Rangrez**](https://github.com/NakliTechie/rangrez), the global colour-palette library that backs all NakliTechie projects.
+
 ---
 
 ## Security model

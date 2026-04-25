@@ -7,25 +7,27 @@
 <title>NakliPoster — Local-First API Client</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ff6c37'/%3E%3Ctext x='16' y='22' font-family='-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif' font-size='14' font-weight='700' fill='white' text-anchor='middle'%3ENP%3C/text%3E%3C/svg%3E">
 <style>
+/* Rangrez · india_east-12 · KANCHENJUNGA PRE-DAWN — first light from Tiger Hill */
 :root {
-  --bg-app: #1e1e1e;
-  --bg-sidebar: #252525;
-  --bg-panel: #2c2c2c;
-  --bg-input: #3a3a3a;
-  --bg-hover: #383838;
-  --bg-tab-active: #1e1e1e;
-  --bg-tab-inactive: #2a2a2a;
-  --accent: #ff6c37;
-  --accent-hover: #e5612f;
-  --text-primary: #d4d4d4;
-  --text-secondary: #999;
-  --text-muted: #555;
-  --border: #3d3d3d;
-  --border-light: #4a4a4a;
+  --bg-app: #06101e;          /* BODY */
+  --bg-sidebar: #0a1422;
+  --bg-panel: #101a2a;         /* PANEL */
+  --bg-input: #15243a;
+  --bg-hover: #18283e;
+  --bg-tab-active: #06101e;
+  --bg-tab-inactive: #0c1828;  /* ROW */
+  --accent: #d8a868;           /* BRAND — peachy mountain dawn */
+  --accent-hover: #b58850;
+  --text-primary: #f8e4a0;     /* INK — saffron */
+  --text-secondary: #b89868;
+  --text-muted: #5a4a28;
+  --border: #1f2c40;
+  --border-light: #2c3a52;
+  /* HTTP method/status colours stay literal — they're a developer-conventions API */
   --s2xx: #49cc90; --s3xx: #fca130; --s4xx: #f93e3e;
   --m-get: #61affe; --m-post: #49cc90; --m-put: #fca130;
   --m-patch: #50e3c2; --m-delete: #f93e3e; --m-head: #9012fe; --m-options: #0d5aa7;
-  --shadow: rgba(0,0,0,0.5);
+  --shadow: rgba(0,0,0,0.55);
   --font-mono: 'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;
   --req-h: 280px;
   --sidebar-w: 260px;
@@ -33,8 +35,10 @@
 [data-theme=light] {
   --bg-app: #fff; --bg-sidebar: #f3f3f3; --bg-panel: #f8f8f8;
   --bg-input: #fff; --bg-hover: #ebebeb; --bg-tab-active: #fff;
-  --bg-tab-inactive: #f0f0f0; --text-primary: #333; --text-secondary: #666;
-  --text-muted: #aaa; --border: #e0e0e0; --border-light: #ccc; --shadow: rgba(0,0,0,0.12);
+  --bg-tab-inactive: #f0f0f0; --text-primary: #2a2010; --text-secondary: #6a5a3a;
+  --text-muted: #a89868; --border: #e0d8c4; --border-light: #c8b88a;
+  --accent: #b58a4a; --accent-hover: #8a6630;
+  --shadow: rgba(42,32,16,0.14);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
