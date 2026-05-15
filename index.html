@@ -1116,16 +1116,19 @@ mark{background:transparent;color:var(--accent);font-weight:600}
     <div class="modal-hdr"><span class="modal-title">Import</span><button class="modal-x" data-mc="import">×</button></div>
     <div class="modal-body">
       <div class="lang-btns" id="imp-types">
-        <button class="imp-type active" data-it="postman">Postman Collection</button>
+        <button class="imp-type active" data-it="postman">Postman</button>
         <button class="imp-type" data-it="curl">cURL</button>
         <button class="imp-type" data-it="openapi">OpenAPI</button>
+        <button class="imp-type" data-it="har">HAR</button>
+        <button class="imp-type" data-it="insomnia">Insomnia</button>
+        <button class="imp-type" data-it="bruno">Bruno</button>
       </div>
       <div class="form-row"><label id="imp-label">Paste Postman Collection JSON</label>
         <textarea id="imp-text" rows="9" placeholder="Paste here..." style="font-family:var(--font-mono);font-size:12px;resize:vertical"></textarea>
       </div>
       <div style="text-align:center;margin-bottom:4px">
         <button class="btn-secondary" id="btn-imp-file">Choose File</button>
-        <input type="file" id="imp-file-input" accept=".json,.yaml,.yml" style="display:none">
+        <input type="file" id="imp-file-input" accept=".json,.yaml,.yml,.har,.bru" style="display:none">
       </div>
     </div>
     <div class="modal-footer">
@@ -1245,10 +1248,23 @@ mark{background:transparent;color:var(--accent);font-weight:600}
         <button class="lang-btn" data-lang="fetch">JS fetch</button>
         <button class="lang-btn" data-lang="axios">axios</button>
         <button class="lang-btn" data-lang="python">Python</button>
+        <button class="lang-btn" data-lang="requests">requests</button>
         <button class="lang-btn" data-lang="go">Go</button>
         <button class="lang-btn" data-lang="httpie">HTTPie</button>
+        <button class="lang-btn" data-lang="php">PHP</button>
+        <button class="lang-btn" data-lang="java">Java</button>
       </div>
       <pre id="code-output"></pre>
+      <details style="margin-top:10px">
+        <summary style="font-size:12px;color:var(--text-muted);cursor:pointer;padding:4px 0">⇄ Paste code → load into request</summary>
+        <div style="padding:8px 0">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Paste a cURL command, JS fetch/axios call, Python requests snippet, HTTPie command, or HAR entry. We'll detect the format and load it as a new tab.</div>
+          <textarea id="code-reverse-input" rows="6" spellcheck="false" placeholder="Paste curl / fetch / requests / httpie here…" style="width:100%;font-family:var(--font-mono);font-size:12px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:6px;resize:vertical"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:6px">
+            <button class="btn-primary" id="btn-code-reverse">Load as new tab</button>
+          </div>
+        </div>
+      </details>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" data-mc="code">Close</button>
@@ -3110,6 +3126,191 @@ function parseOpenAPI(json){
   return coll;
 }
 
+// ── Import HAR ──
+function parseHAR(json){
+  const entries=json.log?.entries||[];
+  const coll={ id:uid(), info:{ name:`HAR Import (${entries.length})`, _postman_id:uid(),
+    schema:'https://schema.getpostman.com/json/collection/v2.1.0/collection.json' },
+    items:[], variable:[], _open:true };
+  entries.forEach(e=>{
+    const r=e.request||{};
+    const item={ id:uid(), name:`${r.method||'GET'} ${(()=>{ try{return new URL(r.url).pathname;}catch{return r.url;} })()}`,
+      type:'request', method:(r.method||'GET').toUpperCase(), url:r.url||'',
+      headers:(r.headers||[]).filter(h=>!h.name.startsWith(':')).map(h=>({key:h.name,value:h.value,enabled:true})),
+      params:(r.queryString||[]).map(q=>({key:q.name,value:q.value,enabled:true})),
+      bodyMode:'none', bodyRaw:'', bodyForm:[], auth:{type:'none'} };
+    if(r.postData){
+      const ct=(r.postData.mimeType||'').toLowerCase();
+      if(r.postData.text){
+        item.bodyRaw=r.postData.text;
+        item.bodyMode=ct.includes('json')?'json':ct.includes('xml')?'xml':ct.includes('urlencoded')?'urlenc':'text';
+      } else if(r.postData.params){
+        item.bodyMode=ct.includes('urlencoded')?'urlenc':'form';
+        item.bodyForm=r.postData.params.map(p=>({key:p.name,value:p.value||'',enabled:true}));
+      }
+    }
+    coll.items.push(item);
+  });
+  return coll;
+}
+
+// ── Import Insomnia (v4 export) ──
+function parseInsomnia(json){
+  const resources=json.resources||[];
+  const reqs=resources.filter(r=>r._type==='request');
+  const coll={ id:uid(), info:{ name:json.__export_source?`Insomnia Import (${reqs.length})`:'Insomnia Import', _postman_id:uid(),
+    schema:'https://schema.getpostman.com/json/collection/v2.1.0/collection.json' },
+    items:[], variable:[], _open:true };
+  reqs.forEach(r=>{
+    const item={ id:uid(), name:r.name||`${r.method} ${r.url}`,
+      type:'request', method:(r.method||'GET').toUpperCase(), url:r.url||'',
+      headers:(r.headers||[]).map(h=>({key:h.name,value:h.value,enabled:!h.disabled})),
+      params:(r.parameters||[]).map(p=>({key:p.name,value:p.value,enabled:!p.disabled})),
+      bodyMode:'none', bodyRaw:'', bodyForm:[], auth:{type:'none'} };
+    const b=r.body||{};
+    const mt=(b.mimeType||'').toLowerCase();
+    if(b.text){
+      item.bodyRaw=b.text;
+      item.bodyMode=mt.includes('json')?'json':mt.includes('xml')?'xml':mt.includes('urlencoded')?'urlenc':'text';
+    } else if(b.params){
+      item.bodyMode=mt.includes('urlencoded')?'urlenc':'form';
+      item.bodyForm=b.params.map(p=>({key:p.name,value:p.value||'',enabled:!p.disabled}));
+    }
+    if(r.authentication?.type==='bearer'){ item.auth={type:'bearer',bearer:r.authentication.token||''}; }
+    else if(r.authentication?.type==='basic'){ item.auth={type:'basic',basicUser:r.authentication.username||'',basicPass:r.authentication.password||''}; }
+    else if(r.authentication?.type==='apikey'){ item.auth={type:'apikey',apiKeyKey:r.authentication.key||'',apiKeyValue:r.authentication.value||'',apiKeyIn:r.authentication.addTo||'header'}; }
+    coll.items.push(item);
+  });
+  return coll;
+}
+
+// ── Import Bruno (.bru text or JSON collection) ──
+function parseBru(text){
+  // Bruno .bru format: blocks like "get { url: ...\n }" and "headers { K: V\n }"
+  const out={method:'GET',url:'',headers:[],bodyRaw:'',bodyMode:'none',bodyForm:[],auth:{type:'none'},name:''};
+  const metaM=text.match(/meta\s*\{([\s\S]*?)\}/);
+  if(metaM){
+    const nm=metaM[1].match(/name:\s*(.+)/);
+    if(nm) out.name=nm[1].trim();
+  }
+  const methodMatch=text.match(/(get|post|put|patch|delete|head|options)\s*\{([\s\S]*?)\}/i);
+  if(methodMatch){
+    out.method=methodMatch[1].toUpperCase();
+    const um=methodMatch[2].match(/url:\s*(.+)/);
+    if(um) out.url=um[1].trim();
+  }
+  const hdrM=text.match(/headers\s*\{([\s\S]*?)\}/);
+  if(hdrM){
+    hdrM[1].split('\n').forEach(line=>{
+      const m=line.match(/^\s*([^:]+):\s*(.+?)\s*$/);
+      if(m) out.headers.push({key:m[1].trim(),value:m[2].trim(),enabled:true});
+    });
+  }
+  const bodyJsonM=text.match(/body:json\s*\{([\s\S]*?)\}\s*$/m)||text.match(/body\s*\{([\s\S]*?)\}\s*$/m);
+  if(bodyJsonM){ out.bodyRaw=bodyJsonM[1].trim(); out.bodyMode='json'; }
+  return out;
+}
+
+// ── Reverse: detect & parse pasted snippet (curl / fetch / axios / requests / httpie / HAR entry) ──
+function parseAnySnippet(text){
+  const t=text.trim();
+  if(!t) return null;
+  // HAR entry (single)
+  if(t.startsWith('{')){
+    try{
+      const j=JSON.parse(t);
+      if(j.log?.entries) return parseHAR(j); // full HAR — caller imports as collection
+      if(j.request?.url){
+        // single HAR entry
+        const tmp={log:{entries:[j]}};
+        const c=parseHAR(tmp);
+        return c.items[0];
+      }
+    }catch{}
+  }
+  if(/^\s*curl\b/i.test(t)) return parseCurl(t);
+  if(/^\s*http(s|ie)?\s+/i.test(t)||/^\s*https?\s+(GET|POST|PUT|PATCH|DELETE)/i.test(t)) return parseHTTPieCmd(t);
+  if(/\bfetch\s*\(/.test(t)||/\baxios\s*[\.\(]/.test(t)) return parseFetchOrAxios(t);
+  if(/\brequests\.(get|post|put|patch|delete|head|options)\s*\(/i.test(t)) return parsePythonRequests(t);
+  return null;
+}
+
+function parseHTTPieCmd(t){
+  const out={method:'GET',url:'',headers:[],bodyRaw:'',bodyMode:'none',bodyForm:[]};
+  const tokens=t.replace(/^\s*(httpie|http)\s+/i,'').match(/(?:[^\s'"]+|'[^']*'|"[^"]*")+/g)||[];
+  let i=0;
+  if(tokens[i]&&/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)$/i.test(tokens[i])){ out.method=tokens[i].toUpperCase(); i++; }
+  if(tokens[i]){ out.url=tokens[i].replace(/^['"]|['"]$/g,''); i++; }
+  for(;i<tokens.length;i++){
+    const tk=tokens[i].replace(/^['"]|['"]$/g,'');
+    if(/^[\w-]+:[^=]/.test(tk)){
+      const ci=tk.indexOf(':');
+      out.headers.push({key:tk.slice(0,ci),value:tk.slice(ci+1),enabled:true});
+    } else if(/^[\w-]+==/.test(tk)){
+      // query param — fold into URL
+      const [k,v]=tk.split('==');
+      out.url+=(out.url.includes('?')?'&':'?')+encodeURIComponent(k)+'='+encodeURIComponent(v);
+    } else if(/^[\w-]+:?=/.test(tk)){
+      // body field
+      const eq=tk.indexOf('=');
+      const isRaw=tk[eq-1]===':';
+      const k=tk.slice(0,isRaw?eq-1:eq);
+      const v=tk.slice(eq+1);
+      try{ const obj=JSON.parse(out.bodyRaw||'{}'); obj[k]=isRaw?JSON.parse(v):v; out.bodyRaw=JSON.stringify(obj,null,2); out.bodyMode='json'; }catch{ out.bodyRaw=tk; out.bodyMode='text'; }
+      if(out.method==='GET') out.method='POST';
+    }
+  }
+  return out;
+}
+
+function parseFetchOrAxios(t){
+  const out={method:'GET',url:'',headers:[],bodyRaw:'',bodyMode:'none',bodyForm:[]};
+  const urlM=t.match(/(?:fetch|axios(?:\.\w+)?)\s*\(\s*['"`]([^'"`]+)['"`]/);
+  if(urlM) out.url=urlM[1];
+  const axMethod=t.match(/axios\.(get|post|put|patch|delete|head|options)\b/i);
+  if(axMethod) out.method=axMethod[1].toUpperCase();
+  const mObj=t.match(/method\s*:\s*['"]([A-Z]+)['"]/i);
+  if(mObj) out.method=mObj[1].toUpperCase();
+  const hObj=t.match(/headers\s*:\s*(\{[\s\S]*?\})/);
+  if(hObj){
+    try{
+      const j=JSON.parse(hObj[1].replace(/'/g,'"').replace(/(\w+):/g,'"$1":'));
+      Object.entries(j).forEach(([k,v])=>out.headers.push({key:k,value:String(v),enabled:true}));
+    }catch{}
+  }
+  const bM=t.match(/body\s*:\s*(?:JSON\.stringify\()?\s*(\{[\s\S]*?\})\s*\)?/)||t.match(/data\s*:\s*(\{[\s\S]*?\})/);
+  if(bM){
+    try{
+      const j=JSON.parse(bM[1].replace(/'/g,'"').replace(/(\w+):/g,'"$1":'));
+      out.bodyRaw=JSON.stringify(j,null,2); out.bodyMode='json';
+      if(out.method==='GET') out.method='POST';
+    }catch{ out.bodyRaw=bM[1]; out.bodyMode='json'; if(out.method==='GET') out.method='POST'; }
+  }
+  return out;
+}
+
+function parsePythonRequests(t){
+  const out={method:'GET',url:'',headers:[],bodyRaw:'',bodyMode:'none',bodyForm:[]};
+  const m=t.match(/requests\.(get|post|put|patch|delete|head|options)\s*\(\s*['"]([^'"]+)['"]/i);
+  if(m){ out.method=m[1].toUpperCase(); out.url=m[2]; }
+  const hM=t.match(/headers\s*=\s*(\{[\s\S]*?\})/);
+  if(hM){
+    try{
+      const j=JSON.parse(hM[1].replace(/'/g,'"'));
+      Object.entries(j).forEach(([k,v])=>out.headers.push({key:k,value:String(v),enabled:true}));
+    }catch{}
+  }
+  const jM=t.match(/json\s*=\s*(\{[\s\S]*?\})/);
+  if(jM){
+    try{ const j=JSON.parse(jM[1].replace(/'/g,'"')); out.bodyRaw=JSON.stringify(j,null,2); out.bodyMode='json'; }
+    catch{ out.bodyRaw=jM[1]; out.bodyMode='json'; }
+  } else {
+    const dM=t.match(/data\s*=\s*['"]([^'"]+)['"]/);
+    if(dM){ out.bodyRaw=dM[1]; out.bodyMode='text'; }
+  }
+  return out;
+}
+
 function doImport(){
   const type=$q('.imp-type.active')?.dataset.it||'postman';
   const text=$('imp-text').value.trim();
@@ -3122,9 +3323,20 @@ function doImport(){
       toast('cURL imported','ok');
       return;
     }
+    if(type==='bruno'&&!text.trim().startsWith('{')){
+      const req=parseBru(text);
+      newTab({ ...req, name:req.name||deriveNameFromUrl(req.url)||'Bruno Request' });
+      closeModal();
+      toast('Bruno request imported','ok');
+      return;
+    }
     const json=JSON.parse(text);
     let coll;
-    if(type==='openapi'||(json.openapi||json.swagger)){
+    if(type==='har'||json.log?.entries){
+      coll=parseHAR(json);
+    } else if(type==='insomnia'||json.__export_format||(json._type==='export')){
+      coll=parseInsomnia(json);
+    } else if(type==='openapi'||(json.openapi||json.swagger)){
       coll=parseOpenAPI(json);
     } else {
       coll=pmToInternal(json);
@@ -3172,7 +3384,7 @@ function generateCode(lang){
     if(hasBody&&bodyRaw){ try{cfg.data=JSON.parse(bodyRaw);}catch{cfg.data=bodyRaw;} }
     return `import axios from 'axios';\n\nconst { data } = await axios(${JSON.stringify(cfg,null,2)});\nconsole.log(data);`;
   }
-  if(lang==='python'){
+  if(lang==='python'||lang==='requests'){
     let s=`import requests\n\nheaders = ${JSON.stringify(hmap,null,2).replace(/"/g,"'")}\n\n`;
     if(hasBody&&bodyRaw){
       s+=`data = ${bodyRaw}\n\n`;
@@ -3181,6 +3393,22 @@ function generateCode(lang){
       s+=`response = requests.${method.toLowerCase()}('${url}', headers=headers)\n`;
     }
     s+=`print(response.json())`;
+    return s;
+  }
+  if(lang==='php'){
+    let s=`<?php\n$ch = curl_init('${url}');\ncurl_setopt($ch, CURLOPT_CUSTOMREQUEST, '${method}');\ncurl_setopt($ch, CURLOPT_RETURNTRANSFER, true);\n`;
+    const hdrArr=Object.entries(hmap).map(([k,v])=>`    '${k}: ${String(v).replace(/'/g,"\\'")}'`);
+    if(hdrArr.length) s+=`curl_setopt($ch, CURLOPT_HTTPHEADER, [\n${hdrArr.join(',\n')}\n]);\n`;
+    if(hasBody&&bodyRaw) s+=`curl_setopt($ch, CURLOPT_POSTFIELDS, ${JSON.stringify(bodyRaw)});\n`;
+    s+=`$response = curl_exec($ch);\ncurl_close($ch);\necho $response;`;
+    return s;
+  }
+  if(lang==='java'){
+    let s=`import java.net.URI;\nimport java.net.http.*;\nimport java.net.http.HttpRequest.BodyPublishers;\nimport java.net.http.HttpResponse.BodyHandlers;\n\npublic class Main {\n  public static void main(String[] args) throws Exception {\n    HttpClient client = HttpClient.newHttpClient();\n    HttpRequest.Builder b = HttpRequest.newBuilder()\n      .uri(URI.create("${url}"))`;
+    if(hasBody&&bodyRaw) s+=`\n      .method("${method}", BodyPublishers.ofString(${JSON.stringify(bodyRaw)}))`;
+    else s+=`\n      .method("${method}", BodyPublishers.noBody())`;
+    Object.entries(hmap).forEach(([k,v])=>{ s+=`\n      .header("${k}", ${JSON.stringify(String(v))})`; });
+    s+=`;\n    HttpResponse<String> response = client.send(b.build(), BodyHandlers.ofString());\n    System.out.println(response.body());\n  }\n}`;
     return s;
   }
   if(lang==='go'){
@@ -3457,7 +3685,7 @@ function bindEvents(){
   $a('.imp-type').forEach(btn=>btn.addEventListener('click',()=>{
     $a('.imp-type').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    const labels={postman:'Paste Postman Collection JSON',curl:'Paste cURL command',openapi:'Paste OpenAPI JSON/YAML'};
+    const labels={postman:'Paste Postman Collection JSON',curl:'Paste cURL command',openapi:'Paste OpenAPI JSON/YAML',har:'Paste HAR JSON (from browser DevTools → Network → Save All as HAR)',insomnia:'Paste Insomnia export JSON',bruno:'Paste Bruno collection JSON or .bru text'};
     $('imp-label').textContent=labels[btn.dataset.it]||'Paste content';
   }));
   $('btn-imp-file').onclick=()=>$('imp-file-input').click();
@@ -3477,6 +3705,26 @@ function bindEvents(){
   }));
   $('btn-copy-code').onclick=()=>{
     navigator.clipboard.writeText($('code-output').textContent).then(()=>toast('Copied','ok'));
+  };
+  $('btn-code-reverse').onclick=()=>{
+    const txt=$('code-reverse-input').value.trim();
+    if(!txt){ toast('Paste a snippet first','err'); return; }
+    try{
+      const r=parseAnySnippet(txt);
+      if(!r){ toast('Could not detect format','err'); return; }
+      if(r.items){
+        // collection (full HAR)
+        r._open=true;
+        S.collections.push(r);
+        saveCollections(); saveCollToFS(r); renderCollectionTree();
+        toast(`Imported ${r.items.length} requests`,'ok');
+      } else {
+        newTab({ ...r, name:deriveNameFromUrl(r.url)||'Imported Request' });
+        toast('Loaded into new tab','ok');
+      }
+      $('code-reverse-input').value='';
+      closeModal();
+    }catch(e){ toast('Parse failed: '+e.message,'err'); }
   };
 
   // Script editors — mark dirty on edit
