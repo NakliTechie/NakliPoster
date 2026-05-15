@@ -820,6 +820,8 @@ mark{background:transparent;color:var(--accent);font-weight:600}
             <option value="basic">Basic Auth</option>
             <option value="apikey">API Key</option>
             <option value="oauth2">OAuth 2.0</option>
+            <option value="jwt">JWT Bearer</option>
+            <option value="awsv4">AWS Signature v4</option>
           </select>
           <div id="auth-fields"></div>
         </div>
@@ -1792,11 +1794,26 @@ function saveUIToTab(){
   if(tab.auth.type==='oauth2'){
     tab.auth.grantType     = af.querySelector('#af-oauth-grant')?.value       || tab.auth.grantType;
     tab.auth.authUrl       = af.querySelector('#af-oauth-auth-url')?.value    ?? tab.auth.authUrl;
+    tab.auth.deviceUrl     = af.querySelector('#af-oauth-device-url')?.value  ?? tab.auth.deviceUrl;
     tab.auth.tokenUrl      = af.querySelector('#af-oauth-token-url')?.value   ?? tab.auth.tokenUrl;
     tab.auth.clientId      = af.querySelector('#af-oauth-client-id')?.value   ?? tab.auth.clientId;
     tab.auth.clientSecret  = af.querySelector('#af-oauth-client-secret')?.value ?? tab.auth.clientSecret;
     tab.auth.redirectUri   = af.querySelector('#af-oauth-redirect')?.value    ?? tab.auth.redirectUri;
     tab.auth.scope         = af.querySelector('#af-oauth-scope')?.value       ?? tab.auth.scope;
+  }
+  if(tab.auth.type==='jwt'){
+    tab.auth.jwtAlg     = af.querySelector('#af-jwt-alg')?.value     || tab.auth.jwtAlg;
+    tab.auth.jwtSecret  = af.querySelector('#af-jwt-secret')?.value  ?? tab.auth.jwtSecret;
+    tab.auth.jwtPayload = af.querySelector('#af-jwt-payload')?.value ?? tab.auth.jwtPayload;
+    tab.auth.jwtPrefix  = af.querySelector('#af-jwt-prefix')?.value  ?? tab.auth.jwtPrefix;
+    tab.auth.jwtAutoIat = af.querySelector('#af-jwt-autoiat')?.checked;
+  }
+  if(tab.auth.type==='awsv4'){
+    tab.auth.awsAccessKey    = af.querySelector('#af-aws-access')?.value  ?? tab.auth.awsAccessKey;
+    tab.auth.awsSecretKey    = af.querySelector('#af-aws-secret')?.value  ?? tab.auth.awsSecretKey;
+    tab.auth.awsRegion       = af.querySelector('#af-aws-region')?.value  ?? tab.auth.awsRegion;
+    tab.auth.awsService      = af.querySelector('#af-aws-service')?.value ?? tab.auth.awsService;
+    tab.auth.awsSessionToken = af.querySelector('#af-aws-session')?.value ?? tab.auth.awsSessionToken;
   }
   autosaveTab();
 }
@@ -1991,23 +2008,36 @@ function renderAuth(auth={}) {
       <option value="query" ${auth.apiKeyIn==='query'?'selected':''}>Query Param</option></select></div>`;
   } else if(t==='oauth2'){
     const rUri=auth.redirectUri||(location.origin+location.pathname);
-    const isAC=(auth.grantType||'authorization_code')==='authorization_code';
+    const grant=auth.grantType||'authorization_code';
+    const isAC=grant==='authorization_code';
+    const isPKCE=grant==='pkce';
+    const isDevice=grant==='device';
+    const showAuthUrl=isAC||isPKCE;
+    const showRedirect=isAC||isPKCE;
+    const showSecret=!isPKCE&&!isDevice;
+    const showDeviceUrl=isDevice;
     af.innerHTML=`
       <div class="auth-row" id="af-oauth-grant-row"><label>Grant Type</label>
         <select id="af-oauth-grant">
           <option value="authorization_code"${isAC?' selected':''}>Authorization Code</option>
-          <option value="client_credentials"${!isAC?' selected':''}>Client Credentials</option>
+          <option value="pkce"${isPKCE?' selected':''}>Authorization Code + PKCE</option>
+          <option value="client_credentials"${grant==='client_credentials'?' selected':''}>Client Credentials</option>
+          <option value="device"${isDevice?' selected':''}>Device Code</option>
         </select></div>
-      <div class="auth-row" id="af-oauth-auth-url-row"${!isAC?' style="display:none"':''}>
+      <div class="auth-row" id="af-oauth-auth-url-row"${!showAuthUrl?' style="display:none"':''}>
         <label>Auth URL</label>
         <input id="af-oauth-auth-url" type="text" placeholder="https://provider.com/oauth/authorize" value="${esc(auth.authUrl||'')}"></div>
+      <div class="auth-row" id="af-oauth-device-url-row"${!showDeviceUrl?' style="display:none"':''}>
+        <label>Device Auth URL</label>
+        <input id="af-oauth-device-url" type="text" placeholder="https://provider.com/oauth/device/code" value="${esc(auth.deviceUrl||'')}"></div>
       <div class="auth-row"><label>Token URL</label>
         <input id="af-oauth-token-url" type="text" placeholder="https://provider.com/oauth/token" value="${esc(auth.tokenUrl||'')}"></div>
       <div class="auth-row"><label>Client ID</label>
         <input id="af-oauth-client-id" type="text" value="${esc(auth.clientId||'')}"></div>
-      <div class="auth-row"><label>Client Secret</label>
+      <div class="auth-row" id="af-oauth-secret-row"${!showSecret?' style="display:none"':''}>
+        <label>Client Secret</label>
         <input id="af-oauth-client-secret" type="password" value="${esc(auth.clientSecret||'')}"></div>
-      <div class="auth-row" id="af-oauth-redirect-row"${!isAC?' style="display:none"':''}>
+      <div class="auth-row" id="af-oauth-redirect-row"${!showRedirect?' style="display:none"':''}>
         <label>Redirect URI</label>
         <input id="af-oauth-redirect" type="text" value="${esc(rUri)}"></div>
       <div class="auth-row"><label>Scope</label>
@@ -2017,12 +2047,50 @@ function renderAuth(auth={}) {
         ${auth.accessToken?`✓ Token active<span class="oauth-token-preview">${esc(auth.accessToken.slice(0,80))}${auth.accessToken.length>80?'…':''}</span>`:''}
       </div>`;
     $('af-oauth-grant').addEventListener('change',()=>{
-      const ac=$('af-oauth-grant').value==='authorization_code';
-      $('af-oauth-auth-url-row').style.display=ac?'':'none';
-      $('af-oauth-redirect-row').style.display=ac?'':'none';
+      const g=$('af-oauth-grant').value;
+      const showAU=g==='authorization_code'||g==='pkce';
+      const showRD=g==='authorization_code'||g==='pkce';
+      const showSec=g!=='pkce'&&g!=='device';
+      const showDev=g==='device';
+      $('af-oauth-auth-url-row').style.display=showAU?'':'none';
+      $('af-oauth-redirect-row').style.display=showRD?'':'none';
+      $('af-oauth-secret-row').style.display=showSec?'':'none';
+      $('af-oauth-device-url-row').style.display=showDev?'':'none';
       markDirty();
     });
     $('btn-oauth-get-token').onclick=doOAuthGetToken;
+  } else if(t==='jwt'){
+    const alg=auth.jwtAlg||'HS256';
+    af.innerHTML=`
+      <div class="auth-row"><label>Algorithm</label>
+        <select id="af-jwt-alg">
+          ${['HS256','HS384','HS512'].map(a=>`<option ${a===alg?'selected':''}>${a}</option>`).join('')}
+        </select></div>
+      <div class="auth-row"><label>Secret</label>
+        <input id="af-jwt-secret" type="password" placeholder="Signing secret" value="${esc(auth.jwtSecret||'')}"></div>
+      <div class="auth-row"><label>Payload (JSON)</label>
+        <textarea id="af-jwt-payload" rows="5" spellcheck="false" style="font-family:var(--font-mono);font-size:12px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:6px;width:100%;resize:vertical">${esc(auth.jwtPayload||'{\n  "sub": "user",\n  "iat": 0,\n  "exp": 0\n}')}</textarea></div>
+      <div class="auth-row"><label>Header prefix</label>
+        <input id="af-jwt-prefix" type="text" placeholder="Bearer" value="${esc(auth.jwtPrefix||'Bearer')}"></div>
+      <div class="auth-row"><label></label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted)">
+          <input type="checkbox" id="af-jwt-autoiat" ${auth.jwtAutoIat!==false?'checked':''}> Auto-set iat (now) and exp (+1h) on send
+        </label>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Signed locally with HMAC-SHA. Token is regenerated each Send so iat/exp stay fresh.</div>`;
+  } else if(t==='awsv4'){
+    af.innerHTML=`
+      <div class="auth-row"><label>Access Key ID</label>
+        <input id="af-aws-access" type="text" value="${esc(auth.awsAccessKey||'')}"></div>
+      <div class="auth-row"><label>Secret Key</label>
+        <input id="af-aws-secret" type="password" value="${esc(auth.awsSecretKey||'')}"></div>
+      <div class="auth-row"><label>Region</label>
+        <input id="af-aws-region" type="text" placeholder="us-east-1" value="${esc(auth.awsRegion||'us-east-1')}"></div>
+      <div class="auth-row"><label>Service</label>
+        <input id="af-aws-service" type="text" placeholder="s3, execute-api, lambda…" value="${esc(auth.awsService||'execute-api')}"></div>
+      <div class="auth-row"><label>Session Token</label>
+        <input id="af-aws-session" type="password" placeholder="(optional, for STS)" value="${esc(auth.awsSessionToken||'')}"></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Signature is computed locally per request. Headers <code>Authorization</code>, <code>X-Amz-Date</code>, and (if set) <code>X-Amz-Security-Token</code> are added on Send.</div>`;
   }
   $a('.auth-row input, .auth-row select', af).forEach(el=>el.oninput=markDirty);
 }
@@ -2066,6 +2134,80 @@ function resolveVars(str){
   const env=getActiveEnvVars();
   const cv=getCollVars(_resolveCollId);
   return str.replace(/\{\{(\w+)\}\}/g,(m,k)=>S.globals[k]??cv[k]??env[k]??m);
+}
+
+// ── JWT signing (HS256/HS384/HS512) ──
+function b64url(buf){
+  const bytes=buf instanceof ArrayBuffer?new Uint8Array(buf):buf;
+  let bin=''; for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function signJWT(auth){
+  const alg=auth.jwtAlg||'HS256';
+  const hashName={HS256:'SHA-256',HS384:'SHA-384',HS512:'SHA-512'}[alg]||'SHA-256';
+  let payload={};
+  try{ payload=JSON.parse(auth.jwtPayload||'{}'); }catch{ throw new Error('JWT payload is not valid JSON'); }
+  if(auth.jwtAutoIat!==false){
+    const now=Math.floor(Date.now()/1000);
+    payload.iat=now;
+    if(!payload.exp||payload.exp<=now) payload.exp=now+3600;
+  }
+  const header={alg, typ:'JWT'};
+  const enc=new TextEncoder();
+  const headerB64=b64url(enc.encode(JSON.stringify(header)));
+  const payloadB64=b64url(enc.encode(JSON.stringify(payload)));
+  const data=enc.encode(headerB64+'.'+payloadB64);
+  const key=await crypto.subtle.importKey('raw', enc.encode(auth.jwtSecret||''), {name:'HMAC',hash:hashName}, false, ['sign']);
+  const sig=await crypto.subtle.sign('HMAC', key, data);
+  return headerB64+'.'+payloadB64+'.'+b64url(sig);
+}
+
+// ── AWS Signature v4 ──
+async function awsSigV4(auth, method, urlStr, headers, body){
+  const url=new URL(urlStr);
+  const region=auth.awsRegion||'us-east-1';
+  const service=auth.awsService||'execute-api';
+  const now=new Date();
+  const amzDate=now.toISOString().replace(/[:\-]|\.\d{3}/g,'');
+  const dateStamp=amzDate.slice(0,8);
+  // Canonical request
+  const canonicalUri=url.pathname.split('/').map(s=>encodeURIComponent(decodeURIComponent(s))).join('/')||'/';
+  const params=[...url.searchParams.entries()].sort(([a],[b])=>a<b?-1:a>b?1:0);
+  const canonicalQuery=params.map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+  const hdrsLower={};
+  Object.entries(headers).forEach(([k,v])=>{ hdrsLower[k.toLowerCase()]=String(v).trim().replace(/\s+/g,' '); });
+  hdrsLower['host']=url.host;
+  hdrsLower['x-amz-date']=amzDate;
+  if(auth.awsSessionToken) hdrsLower['x-amz-security-token']=auth.awsSessionToken;
+  const sortedNames=Object.keys(hdrsLower).sort();
+  const canonicalHeaders=sortedNames.map(n=>n+':'+hdrsLower[n]+'\n').join('');
+  const signedHeaders=sortedNames.join(';');
+  const enc=new TextEncoder();
+  const bodyBytes=body?(typeof body==='string'?enc.encode(body):body instanceof ArrayBuffer?new Uint8Array(body):enc.encode(String(body))):new Uint8Array(0);
+  const payloadHash=await sha256Hex(bodyBytes);
+  const canonicalReq=[method,canonicalUri,canonicalQuery,canonicalHeaders,signedHeaders,payloadHash].join('\n');
+  // String to sign
+  const credScope=`${dateStamp}/${region}/${service}/aws4_request`;
+  const stringToSign=['AWS4-HMAC-SHA256',amzDate,credScope,await sha256Hex(enc.encode(canonicalReq))].join('\n');
+  // Signing key
+  const kDate=await hmac(enc.encode('AWS4'+(auth.awsSecretKey||'')), enc.encode(dateStamp));
+  const kRegion=await hmac(kDate, enc.encode(region));
+  const kService=await hmac(kRegion, enc.encode(service));
+  const kSigning=await hmac(kService, enc.encode('aws4_request'));
+  const sig=await hmac(kSigning, enc.encode(stringToSign));
+  const sigHex=[...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  const authHeader=`AWS4-HMAC-SHA256 Credential=${auth.awsAccessKey}/${credScope}, SignedHeaders=${signedHeaders}, Signature=${sigHex}`;
+  const out={'Authorization':authHeader, 'X-Amz-Date':amzDate};
+  if(auth.awsSessionToken) out['X-Amz-Security-Token']=auth.awsSessionToken;
+  return out;
+}
+async function sha256Hex(bytes){
+  const h=await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function hmac(key, data){
+  const k=await crypto.subtle.importKey('raw', key, {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
+  return crypto.subtle.sign('HMAC', k, data);
 }
 
 // ── Build Request ──
@@ -2168,6 +2310,20 @@ async function sendRequest(tab=null, extraEnv={}){
   let response=null;
   try{
     const req=buildRequest(tab);
+    // Async auth: JWT signing & AWS SigV4 (need crypto.subtle)
+    const a=tab.auth||{};
+    if(a.type==='jwt'&&a.jwtSecret){
+      try{
+        const tok=await signJWT(a);
+        const prefix=(a.jwtPrefix??'Bearer').trim();
+        req.headers['Authorization']=prefix?prefix+' '+tok:tok;
+      }catch(e){ throw new Error('JWT: '+e.message); }
+    } else if(a.type==='awsv4'&&a.awsAccessKey&&a.awsSecretKey){
+      try{
+        const sigHdrs=await awsSigV4(a, req.method, req.url, req.headers, req.body);
+        Object.assign(req.headers, sigHdrs);
+      }catch(e){ throw new Error('AWS SigV4: '+e.message); }
+    }
     const fetchOpts={ method:req.method, headers:req.headers, signal:ctrl.signal };
     if(req.body!==undefined&&!['GET','HEAD'].includes(req.method)) fetchOpts.body=req.body;
     const res=await fetch(req.url, fetchOpts);
@@ -2483,11 +2639,18 @@ async function doOAuthGetToken(){
 
   try{
     let data;
-    if((auth.grantType||'authorization_code')==='client_credentials'){
+    const g=auth.grantType||'authorization_code';
+    if(g==='client_credentials'){
       data=await oauthClientCredentials(auth);
+    } else if(g==='device'){
+      if(!auth.deviceUrl){ toast('Enter a Device Auth URL first','err'); btn.disabled=false; return; }
+      data=await oauthDeviceCode(auth, status);
+    } else if(g==='pkce'){
+      if(!auth.authUrl){ toast('Enter an Auth URL first','err'); btn.disabled=false; return; }
+      data=await oauthAuthorizationCode(auth, true);
     } else {
       if(!auth.authUrl){ toast('Enter an Auth URL first','err'); btn.disabled=false; return; }
-      data=await oauthAuthorizationCode(auth);
+      data=await oauthAuthorizationCode(auth, false);
     }
     const token=data.access_token;
     if(!token) throw new Error('No access_token in response: '+JSON.stringify(data));
@@ -2522,15 +2685,55 @@ async function oauthClientCredentials(auth){
   return res.json();
 }
 
-function oauthAuthorizationCode(auth){
-  return new Promise((resolve,reject)=>{
+async function oauthPKCEPair(){
+  const arr=new Uint8Array(32); crypto.getRandomValues(arr);
+  const verifier=btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const hash=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  const challenge=btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  return {verifier,challenge};
+}
+
+async function oauthDeviceCode(auth, statusEl){
+  const params=new URLSearchParams({client_id:auth.clientId});
+  if(auth.scope) params.set('scope',auth.scope);
+  const r=await fetch(auth.deviceUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params.toString()});
+  if(!r.ok) throw new Error(`Device auth: ${r.status} ${r.statusText}`);
+  const d=await r.json();
+  const userCode=d.user_code, verUri=d.verification_uri||d.verification_url, verUriComplete=d.verification_uri_complete;
+  const interval=(d.interval||5)*1000;
+  const expires=Date.now()+(d.expires_in||600)*1000;
+  if(statusEl){
+    statusEl.className='loading';
+    statusEl.innerHTML=`Visit <a href="${esc(verUri)}" target="_blank">${esc(verUri)}</a> and enter code <strong>${esc(userCode)}</strong>${verUriComplete?` — or open <a href="${esc(verUriComplete)}" target="_blank">this link</a>`:''}`;
+  }
+  // Poll token endpoint
+  while(Date.now()<expires){
+    await new Promise(r=>setTimeout(r,interval));
+    const tp=new URLSearchParams({
+      grant_type:'urn:ietf:params:oauth:grant-type:device_code',
+      device_code:d.device_code,
+      client_id:auth.clientId,
+    });
+    const tr=await fetch(auth.tokenUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:tp.toString()});
+    const td=await tr.json();
+    if(tr.ok&&td.access_token) return td;
+    if(td.error==='authorization_pending'||td.error==='slow_down') continue;
+    throw new Error(td.error_description||td.error||`${tr.status} ${tr.statusText}`);
+  }
+  throw new Error('Device code expired');
+}
+
+function oauthAuthorizationCode(auth, usePKCE){
+  return new Promise(async (resolve,reject)=>{
     const state=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+    const pkce=usePKCE?await oauthPKCEPair():null;
     const authUrl=new URL(auth.authUrl);
     authUrl.searchParams.set('response_type','code');
     authUrl.searchParams.set('client_id',auth.clientId);
     authUrl.searchParams.set('redirect_uri',auth.redirectUri||(location.origin+location.pathname));
     authUrl.searchParams.set('state',state);
     if(auth.scope) authUrl.searchParams.set('scope',auth.scope);
+    if(pkce){ authUrl.searchParams.set('code_challenge',pkce.challenge); authUrl.searchParams.set('code_challenge_method','S256'); }
 
     const popup=window.open(authUrl.toString(),'oauth_popup','width=560,height=680,left=200,top=100');
     if(!popup||popup.closed){ reject(new Error('Popup blocked — allow popups for this page')); return; }
@@ -2558,8 +2761,9 @@ function oauthAuthorizationCode(auth){
             code,
             redirect_uri:auth.redirectUri||(location.origin+location.pathname),
             client_id:auth.clientId,
-            client_secret:auth.clientSecret,
           });
+          if(pkce) params.set('code_verifier',pkce.verifier);
+          else if(auth.clientSecret) params.set('client_secret',auth.clientSecret);
           const res=await fetch(auth.tokenUrl,{
             method:'POST',
             headers:{'Content-Type':'application/x-www-form-urlencoded'},
