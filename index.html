@@ -766,6 +766,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
           <option>GET</option><option>POST</option><option>PUT</option>
           <option>PATCH</option><option>DELETE</option><option>HEAD</option><option>OPTIONS</option>
           <option value="WS">WS</option>
+          <option value="SSE">SSE</option>
           <option value="GQL">GQL</option>
         </select>
         <input id="url-input" type="text" placeholder="https://api.example.com/endpoint" spellcheck="false" autocomplete="off">
@@ -896,6 +897,8 @@ mark{background:transparent;color:var(--accent);font-weight:600}
           <span class="res-meta-txt" id="res-time-txt"></span>
           <span class="res-meta-txt" id="res-size-txt"></span>
           <div id="res-actions">
+            <button id="btn-pin-baseline" title="Pin this response as baseline for diffs">Pin</button>
+            <button id="btn-diff-res" title="Diff against pinned baseline" style="display:none">Diff</button>
             <button id="btn-copy-res">Copy</button>
             <button id="btn-save-res">Save</button>
           </div>
@@ -1271,6 +1274,18 @@ mark{background:transparent;color:var(--accent);font-weight:600}
     <div class="modal-footer">
       <button class="btn-secondary" data-mc="code">Close</button>
       <button class="btn-primary" id="btn-copy-code">Copy</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modal-diff" style="display:none;max-width:900px;width:96vw">
+    <div class="modal-hdr"><span class="modal-title">Response Diff</span><button class="modal-x" data-mc="diff">×</button></div>
+    <div class="modal-body">
+      <div id="diff-summary" style="font-size:12px;color:var(--text-muted);margin-bottom:8px"></div>
+      <pre id="diff-output" style="font-family:var(--font-mono);font-size:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:10px;max-height:60vh;overflow:auto;white-space:pre-wrap;word-break:break-word"></pre>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-mc="diff">Close</button>
+      <button class="btn-primary" id="btn-clear-baseline">Clear baseline</button>
     </div>
   </div>
 
@@ -2390,6 +2405,56 @@ function showEmpty(){
   $('res-content').style.display='none';
 }
 
+function refreshDiffButton(tab){
+  const has=!!tab?.baseline;
+  const btn=$('btn-diff-res'); const pin=$('btn-pin-baseline');
+  if(btn) btn.style.display=has?'':'none';
+  if(pin) pin.textContent=has?'Re-pin':'Pin';
+}
+
+function tryPrettyJSON(s){ try{ return JSON.stringify(JSON.parse(s),null,2); }catch{ return s; } }
+
+// Minimal LCS-based line diff
+function lineDiff(aText,bText){
+  const a=aText.split('\n'), b=bText.split('\n');
+  const m=a.length, n=b.length;
+  const lcs=Array.from({length:m+1},()=>new Uint32Array(n+1));
+  for(let i=m-1;i>=0;i--) for(let j=n-1;j>=0;j--){
+    lcs[i][j]=a[i]===b[j]?lcs[i+1][j+1]+1:Math.max(lcs[i+1][j],lcs[i][j+1]);
+  }
+  const out=[];
+  let i=0,j=0;
+  while(i<m&&j<n){
+    if(a[i]===b[j]){ out.push({t:' ',l:a[i]}); i++; j++; }
+    else if(lcs[i+1][j]>=lcs[i][j+1]){ out.push({t:'-',l:a[i]}); i++; }
+    else { out.push({t:'+',l:b[j]}); j++; }
+  }
+  while(i<m){ out.push({t:'-',l:a[i++]}); }
+  while(j<n){ out.push({t:'+',l:b[j++]}); }
+  return out;
+}
+
+function showDiffModal(baseline, current){
+  const aBody=tryPrettyJSON(baseline.body||'');
+  const bBody=tryPrettyJSON(current.body||'');
+  const diff=lineDiff(aBody,bBody);
+  const added=diff.filter(d=>d.t==='+').length;
+  const removed=diff.filter(d=>d.t==='-').length;
+  const same=diff.filter(d=>d.t===' ').length;
+  const stChanged=baseline.status!==current.status;
+  const timeDelta=(current.time||0)-(baseline.time||0);
+  $('diff-summary').innerHTML=
+    `<strong>Body:</strong> +${added} / −${removed} (${same} unchanged) &nbsp; `+
+    `<strong>Status:</strong> ${stChanged?`<span style="color:var(--danger,#e66)">${baseline.status} → ${current.status}</span>`:current.status} &nbsp; `+
+    `<strong>Time:</strong> ${baseline.time||0}ms → ${current.time||0}ms (${timeDelta>=0?'+':''}${timeDelta}ms)`;
+  const html=diff.map(d=>{
+    const color=d.t==='+'?'color:#7dd87d':d.t==='-'?'color:#e88':'color:var(--text-muted)';
+    return `<div style="${color}">${d.t} ${esc(d.l)}</div>`;
+  }).join('');
+  $('diff-output').innerHTML=html||'<em>No changes</em>';
+  openModal('diff');
+}
+
 function showResponse(r){
   if(!r){ showEmpty(); return; }
   $('res-empty').style.display='none';
@@ -2427,6 +2492,7 @@ function showResponse(r){
 
   _rawResponseBody=r.body||'';
   renderResBody(_currentResMode, r);
+  refreshDiffButton(getActiveTab());
 
   // Headers
   const hdrs=$('res-hdrs-panel');
@@ -3784,6 +3850,22 @@ function bindEvents(){
   $('btn-copy-res').onclick=()=>{
     navigator.clipboard.writeText(_rawResponseBody).then(()=>toast('Copied','ok'));
   };
+  $('btn-pin-baseline').onclick=()=>{
+    const tab=getActiveTab(); if(!tab?.response){ toast('No response to pin','err'); return; }
+    tab.baseline={ status:tab.response.status, headers:tab.response.headers, body:tab.response.body, time:tab.response.time, ts:Date.now() };
+    autosaveTab();
+    refreshDiffButton(tab);
+    toast('Baseline pinned','ok');
+  };
+  $('btn-diff-res').onclick=()=>{
+    const tab=getActiveTab(); if(!tab?.baseline||!tab?.response){ toast('Pin a baseline first','err'); return; }
+    showDiffModal(tab.baseline, tab.response);
+  };
+  $('btn-clear-baseline').onclick=()=>{
+    const tab=getActiveTab(); if(!tab) return;
+    delete tab.baseline; autosaveTab(); refreshDiffButton(tab);
+    closeModal(); toast('Baseline cleared','ok');
+  };
   $('btn-save-res').onclick=async()=>{
     const tab=getActiveTab();
     const ct=tab?.response?.contentType||'';
@@ -4123,10 +4205,32 @@ function makePmShim(tab, response, logs=[], extraEnv={}, testResults=[]){
       to:{ have:{ jsonBody:()=>{} } },
     } : null,
     test:(name,fn)=>{
-      try{ fn(); testResults.push({name,passed:true}); }
+      try{
+        const r=fn();
+        if(r&&typeof r.then==='function'){
+          return r.then(()=>testResults.push({name,passed:true}),e=>testResults.push({name,passed:false,error:e.message}));
+        }
+        testResults.push({name,passed:true});
+      }
       catch(e){ testResults.push({name,passed:false,error:e.message}); }
     },
     expect:pmExpect,
+    // Latency budget — throws if response slower than ms
+    responseTimeBelow:(ms)=>{
+      const t=response?.time||0;
+      if(t>=ms) throw new Error(`Response time ${t}ms exceeds budget ${ms}ms`);
+    },
+    // JSON Schema — throws on first error
+    expectSchema:(schema,data)=>{
+      const v=data!==undefined?data:(()=>{ try{return JSON.parse(response?.body||'null');}catch{return null;} })();
+      const errs=pm.jsonSchema(v,schema);
+      if(errs.length) throw new Error('Schema validation failed:\n  '+errs.join('\n  '));
+    },
+    // JSONPath — returns matches against response JSON
+    jsonPath:(path,data)=>{
+      const v=data!==undefined?data:(()=>{ try{return JSON.parse(response?.body||'null');}catch{return null;} })();
+      return pm.jsonpath(v,path);
+    },
     sendRequest:(opts,cb)=>{
       const url=typeof opts==='string'?opts:opts.url;
       const method=(opts.method||'GET').toUpperCase();
@@ -4135,6 +4239,59 @@ function makePmShim(tab, response, logs=[], extraEnv={}, testResults=[]){
         const body=await r.text();
         cb(null,{code:r.status,status:r.statusText,json:()=>JSON.parse(body),text:()=>body,headers:{get:k=>r.headers.get(k)}});
       }).catch(e=>cb(e,null));
+    },
+    // JSONPath: tiny implementation supporting $, ., [n], [*], .. (recursive descent)
+    jsonpath:(obj,path)=>{
+      if(!path||path==='$') return [obj];
+      const tokens=path.replace(/^\$/, '').replace(/\[(\d+)\]/g,'.$1').replace(/\[\*\]/g,'.*').split('.').filter(Boolean);
+      let cur=[obj];
+      let recursive=false;
+      for(const tk of tokens){
+        if(tk===''){ recursive=true; continue; }
+        const next=[];
+        const visit=(v)=>{
+          if(v==null) return;
+          if(tk==='*'){ if(Array.isArray(v)) v.forEach(x=>next.push(x)); else if(typeof v==='object') Object.values(v).forEach(x=>next.push(x)); }
+          else if(/^\d+$/.test(tk)){ if(Array.isArray(v)) next.push(v[+tk]); }
+          else if(typeof v==='object'){ if(tk in v) next.push(v[tk]); }
+        };
+        const walk=(v)=>{ visit(v); if(recursive&&v&&typeof v==='object'){ Object.values(v).forEach(walk); } };
+        cur.forEach(recursive?walk:visit);
+        cur=next.filter(x=>x!==undefined);
+        recursive=false;
+      }
+      return cur;
+    },
+    // JSON Schema (very small subset: type, properties, required, items, enum, minimum/maximum, minLength/maxLength, pattern)
+    jsonSchema:(data,schema)=>{
+      const errs=[];
+      function check(v,sch,path){
+        if(!sch) return;
+        if(sch.type){
+          const t=Array.isArray(v)?'array':v===null?'null':typeof v;
+          const ok=Array.isArray(sch.type)?sch.type.includes(t):sch.type===t||(sch.type==='integer'&&t==='number'&&Number.isInteger(v));
+          if(!ok){ errs.push(`${path}: expected type ${sch.type}, got ${t}`); return; }
+        }
+        if(sch.enum&&!sch.enum.includes(v)) errs.push(`${path}: value ${JSON.stringify(v)} not in enum ${JSON.stringify(sch.enum)}`);
+        if(typeof v==='number'){
+          if(sch.minimum!=null&&v<sch.minimum) errs.push(`${path}: ${v} < minimum ${sch.minimum}`);
+          if(sch.maximum!=null&&v>sch.maximum) errs.push(`${path}: ${v} > maximum ${sch.maximum}`);
+        }
+        if(typeof v==='string'){
+          if(sch.minLength!=null&&v.length<sch.minLength) errs.push(`${path}: length ${v.length} < minLength`);
+          if(sch.maxLength!=null&&v.length>sch.maxLength) errs.push(`${path}: length ${v.length} > maxLength`);
+          if(sch.pattern&&!new RegExp(sch.pattern).test(v)) errs.push(`${path}: does not match pattern ${sch.pattern}`);
+        }
+        if(sch.type==='object'||sch.properties){
+          (sch.required||[]).forEach(k=>{ if(!v||!(k in v)) errs.push(`${path}.${k}: required`); });
+          if(sch.properties&&v&&typeof v==='object') Object.entries(sch.properties).forEach(([k,s])=>{ if(k in v) check(v[k],s,`${path}.${k}`); });
+        }
+        if((sch.type==='array'||sch.items)&&Array.isArray(v)&&sch.items){
+          v.forEach((it,i)=>check(it,sch.items,`${path}[${i}]`));
+        }
+      }
+      check(data,schema,'$');
+      return errs;
     },
   };
   return pm;
@@ -5256,6 +5413,7 @@ function updateSearchFocus(delta){
 // ── WebSocket Client ──
 const WS = {
   socket: null,
+  sse: null,
   url: '',
 };
 
@@ -5285,6 +5443,8 @@ function wsSetStatus(state){
 }
 
 function wsConnect(){
+  const method=$('method-select').value;
+  if(method==='SSE') return sseConnect();
   const url=$('url-input').value.trim();
   if(!url){toast('Enter a WebSocket URL (ws:// or wss://)','err');return;}
   if(WS.socket&&WS.socket.readyState<2){ WS.socket.close(); }
@@ -5304,7 +5464,24 @@ function wsConnect(){
 }
 
 function wsDisconnect(){
+  if(WS.sse){ try{WS.sse.close();}catch{} WS.sse=null; wsSetStatus('closed'); wsLog('sys','Subscription closed'); return; }
   if(WS.socket) WS.socket.close();
+}
+
+function sseConnect(){
+  const url=resolveVars($('url-input').value.trim());
+  if(!url){ toast('Enter an SSE URL (http(s)://…)','err'); return; }
+  if(WS.sse){ try{WS.sse.close();}catch{} WS.sse=null; }
+  wsSetStatus('connecting');
+  wsLog('sys',`Subscribing to ${url}…`);
+  try{
+    WS.sse=new EventSource(url, {withCredentials:false});
+  }catch(e){
+    wsSetStatus('closed'); wsLog('sys','Error: '+e.message); return;
+  }
+  WS.sse.onopen=()=>{wsSetStatus('open'); wsLog('sys','Stream open');};
+  WS.sse.onmessage=e=>{ wsLog('in', e.data); };
+  WS.sse.onerror=()=>{ wsLog('sys','Stream error (browser may auto-reconnect)'); };
 }
 
 function wsSend(){
@@ -5323,18 +5500,25 @@ function wsSend(){
 function onMethodChange(){
   const method=$('method-select').value;
   const isWS=method==='WS';
+  const isSSE=method==='SSE';
+  const isStream=isWS||isSSE;
   const isGQL=method==='GQL';
-  const isHTTP=!isWS&&!isGQL;
-  // Show/hide panels
-  $('ws-panel').style.display=isWS?'flex':'none';
+  const isHTTP=!isStream&&!isGQL;
+  // Show/hide panels — WS panel reused for SSE
+  $('ws-panel').style.display=isStream?'flex':'none';
   $('gql-panel').style.display=isGQL?'flex':'none';
   $('req-tabs').style.display=(isHTTP||isGQL)?'':'none';
   $('resize-handle').style.display=(isHTTP||isGQL)?'':'none';
   $('response-section').style.display=(isHTTP||isGQL)?'flex':'none';
-  // In GQL mode: hide all rpanels with display:none (GQL panel replaces the body area)
-  // In WS mode: visibility:hidden to preserve layout
-  // In HTTP mode: restore normally
-  if(isWS){
+  // Toggle send/disconnect button labels for SSE mode
+  if(isSSE){
+    $('btn-ws-connect').textContent='Subscribe';
+    $('ws-send-row').style.display='none';
+  } else if(isWS){
+    $('btn-ws-connect').textContent='Connect';
+    $('ws-send-row').style.display='';
+  }
+  if(isStream){
     $a('.rpanel').forEach(p=>{ p.style.visibility='hidden'; p.style.display=''; });
   } else if(isGQL){
     $a('.rpanel').forEach(p=>{ p.style.display='none'; p.style.visibility=''; });
@@ -5352,11 +5536,12 @@ function onMethodChange(){
   // GQL introspect button in URL bar
   $('btn-gql-introspect').style.display=isGQL?'inline-block':'none';
   // Adjust URL bar buttons
-  $('btn-send').style.display=isWS?'none':'';
-  $('btn-cancel').style.display=isWS?'none':'';
+  $('btn-send').style.display=isStream?'none':'';
+  $('btn-cancel').style.display=isStream?'none':'';
   // Update URL placeholder
-  $('url-input').placeholder=isWS?'wss://echo.websocket.org':isGQL?'https://api.example.com/graphql':'https://api.example.com/endpoint';
+  $('url-input').placeholder=isWS?'wss://echo.websocket.org':isSSE?'https://api.example.com/events':isGQL?'https://api.example.com/graphql':'https://api.example.com/endpoint';
   if(!isWS&&WS.socket&&WS.socket.readyState<2) WS.socket.close();
+  if(!isSSE&&WS.sse){ try{WS.sse.close();}catch{} WS.sse=null; }
 }
 
 function switchReqTab(name){
