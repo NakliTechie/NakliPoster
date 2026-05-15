@@ -19,12 +19,13 @@ NakliPoster is the escape route. Everything runs in the browser — your request
 ## Features
 
 ### Core API Client
-- HTTP methods: GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, **WS (WebSocket)**, **GQL (GraphQL)**
+- HTTP methods: GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, **WS (WebSocket)**, **SSE (Server-Sent Events)**, **GQL (GraphQL)**
 - URL bar with `{{variable}}` interpolation
 - Params, Headers, Body (JSON / XML / text / form-data / urlencoded)
-- Auth: Bearer token, Basic, API Key, **OAuth 2.0** (Authorization Code + Client Credentials)
+- Auth: Bearer, Basic, API Key, **OAuth 2.0** (Authorization Code, Authorization Code + PKCE, Client Credentials, Device Code), **JWT Bearer** (HMAC-signed locally), **AWS Signature v4**
 - **GraphQL** — dedicated query editor, variables panel, operation name; schema explorer via introspection (⟳ Schema); sends standard `POST {query, variables, operationName}` body; auth and headers work normally
 - Syntax-highlighted response viewer (Pretty / Raw / Preview)
+- **Response diff** — pin any response as a baseline and diff subsequent runs (body line diff + status + latency delta)
 - Multiple tabs, session restored on reload
 - Request history with full-text search
 - Global search across collections, history, and URLs (⌘K / Ctrl+K)
@@ -34,15 +35,18 @@ NakliPoster is the escape route. Everything runs in the browser — your request
 - Continuous autosave, directory watcher (new files auto-imported)
 - Environments + Globals with `{{variable}}` interpolation
 - Cookie manager — domain-scoped cookies auto-injected as `Cookie:` header
-- Import: Postman v2.1, cURL, OpenAPI 3.x
+- Import: Postman v2.1, cURL, OpenAPI 3.x / Swagger 2.0 (with **try-it-out endpoint explorer**), HAR (browser DevTools), Insomnia v4, Bruno (`.bru` or JSON)
 - Export any collection as `.postman_collection.json`
-- Code generation: cURL, JS fetch, axios, Python, Go, HTTPie
+- Code generation: cURL, JS fetch, axios, Python, requests, Go, HTTPie, PHP, Java — plus a **reverse parser** that detects pasted curl/fetch/requests/httpie/HAR and loads it as a new tab
 - In-browser git history — browse and restore past versions of any collection (requires `git init` in the workspace folder)
 
 ### Scripting & Testing
 - Pre-request scripts — run JS before each request (variable manipulation, dynamic auth)
 - Test scripts — Chai-style assertions (`pm.expect(res.json().id).to.be.a('number')`)
-- Collection Runner — execute all requests in a collection sequentially with variable chaining
+- **`pm.expectSchema(schema)`** — validate response body against a small JSON-Schema subset
+- **`pm.jsonPath('$.data[*].id')`** — extract values from response JSON
+- **`pm.responseTimeBelow(ms)`** — latency budget assertion
+- Collection Runner — execute all requests in a collection sequentially with variable chaining; optional CSV/JSON data file drives variables across iterations
 - **Response variable extraction** — click any JSON value in the response to set it as an environment variable, no scripting required; optionally auto-appends `pm.environment.set()` to the Tests script for the runner
 
 ### JavaScript API & Cross-Tab Injection

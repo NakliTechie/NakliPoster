@@ -1138,6 +1138,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" data-mc="import">Cancel</button>
+      <button class="btn-secondary" id="btn-oapi-explore" style="display:none">Explore</button>
       <button class="btn-primary" id="btn-confirm-import">Import</button>
     </div>
   </div>
@@ -1277,6 +1278,22 @@ mark{background:transparent;color:var(--accent);font-weight:600}
     </div>
   </div>
 
+  <div class="modal" id="modal-oapi" style="display:none;max-width:760px;width:96vw">
+    <div class="modal-hdr"><span class="modal-title" id="oapi-title">OpenAPI Explorer</span><button class="modal-x" data-mc="oapi">×</button></div>
+    <div class="modal-body">
+      <div id="oapi-info" style="font-size:12px;color:var(--text-muted);margin-bottom:8px"></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input id="oapi-server" placeholder="Base URL" style="flex:1;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:5px 8px;font-size:12px">
+        <input id="oapi-filter" placeholder="Filter…" style="flex:1;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:5px 8px;font-size:12px">
+      </div>
+      <div id="oapi-tree" style="max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:4px;padding:6px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-mc="oapi">Close</button>
+      <button class="btn-primary" id="btn-oapi-import-all">Import all as collection</button>
+    </div>
+  </div>
+
   <div class="modal" id="modal-diff" style="display:none;max-width:900px;width:96vw">
     <div class="modal-hdr"><span class="modal-title">Response Diff</span><button class="modal-x" data-mc="diff">×</button></div>
     <div class="modal-body">
@@ -1314,7 +1331,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
         <li><strong>Params</strong> — query parameters, synced live with the URL bar.</li>
         <li><strong>Headers</strong> — add any request headers you need.</li>
         <li><strong>Body</strong> — send raw JSON/XML/text, form-data, or a file. Selecting a mode enables the editor.</li>
-        <li><strong>Auth</strong> — Bearer token, Basic Auth, API Key, or OAuth 2.0 (Authorization Code + Client Credentials).</li>
+        <li><strong>Auth</strong> — Bearer, Basic, API Key, OAuth 2.0 (Authorization Code + PKCE, Client Credentials, Device Code), JWT Bearer (HMAC-signed locally), or AWS Signature v4.</li>
         <li><strong>Pre-req / Tests</strong> — run JavaScript before and after the request (see Scripts &amp; Tests tab).</li>
       </ul>
       <h3>Multiple requests</h3>
@@ -1362,7 +1379,8 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       <h3>Importing</h3>
       <ul>
         <li>Click the <strong>↓</strong> (import) icon in the sidebar toolbar.</li>
-        <li>Supported formats: Postman Collection v2.1, OpenAPI 3.x / Swagger 2.0, cURL command (paste), HAR file.</li>
+        <li>Supported formats: Postman Collection v2.1, OpenAPI 3.x / Swagger 2.0 (with try-it-out explorer), cURL, HAR (browser DevTools export), Insomnia v4 export, Bruno collection / .bru file.</li>
+        <li>Code modal also has a <strong>reverse parser</strong> — paste a cURL, JS fetch/axios, Python requests, or HTTPie command, and we'll load it as a new tab.</li>
       </ul>
       <h3>Collection Runner</h3>
       <ul>
@@ -1420,6 +1438,12 @@ mark{background:transparent;color:var(--accent);font-weight:600}
         <li><code>.to.have.property('key')</code></li>
         <li><code>.to.include('substring')</code></li>
         <li><code>.to.be.above(0)</code> / <code>.to.be.below(500)</code></li>
+      </ul>
+      <h3>JSON Schema, JSONPath, latency budget</h3>
+      <ul>
+        <li><code>pm.expectSchema({type:'object', required:['id'], properties:{id:{type:'number'}}})</code> — validates the response body against a small JSON Schema subset (type / properties / required / items / enum / min-max / pattern).</li>
+        <li><code>pm.jsonPath('$.data.users[*].id')</code> — returns matches from the response JSON. Supports <code>$</code>, dot, <code>[n]</code>, <code>[*]</code>, and recursive <code>..</code>.</li>
+        <li><code>pm.responseTimeBelow(500)</code> — fails the assertion if the response took ≥ 500 ms.</li>
       </ul>
       <h3>Modifying variables from scripts</h3>
       <ul>
@@ -1511,6 +1535,8 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       <p>Select <strong>OAuth 2.0</strong> from the Auth dropdown to configure a full OAuth flow.</p>
       <ul>
         <li><strong>Client Credentials</strong> — enter Token URL, Client ID, and Secret. Click <strong>Get New Access Token</strong>. The token is fetched directly with no browser interaction and applied as a Bearer token for all subsequent requests.</li>
+        <li><strong>Authorization Code + PKCE</strong> — same as Authorization Code but uses a code verifier instead of a client secret. Preferred for public clients (SPAs, native apps).</li>
+        <li><strong>Device Code</strong> — for CLIs and devices without a browser. Click <strong>Get New Access Token</strong>; you'll see a user code and verification URL to open on another device. NakliPoster polls until you approve.</li>
         <li><strong>Authorization Code</strong> — enter Auth URL, Token URL, Client ID, Client Secret, and Redirect URI. The Redirect URI defaults to the current page URL (<code>http://localhost:8097/</code> in local use). Click <strong>Get New Access Token</strong>: a popup opens to the provider's login page. After you log in, the provider redirects to the Redirect URI, NakliPoster detects the code, exchanges it for a token, and closes the popup automatically.</li>
       </ul>
       <div class="help-note">For Authorization Code to work, you must register the Redirect URI in your OAuth provider's app settings. When running locally, register <code>http://localhost:8097/</code> (or whichever port you use). The token is stored in the tab and sent as <code>Authorization: Bearer &lt;token&gt;</code> automatically.</div>
@@ -3623,6 +3649,86 @@ function doImport(){
   }
 }
 
+// ── OpenAPI Explorer ──
+let _oapiSpec=null;
+function openOpenAPIExplorer(spec){
+  _oapiSpec=spec;
+  $('oapi-title').textContent=`OpenAPI Explorer — ${spec.info?.title||'Untitled'} ${spec.info?.version?'v'+spec.info.version:''}`;
+  $('oapi-info').textContent=spec.info?.description?String(spec.info.description).slice(0,200):'';
+  $('oapi-server').value=(spec.servers?.[0]?.url)||(spec.host?(spec.schemes?.[0]||'https')+'://'+spec.host+(spec.basePath||''):'');
+  renderOAPITree();
+  $('oapi-filter').oninput=renderOAPITree;
+  $('oapi-server').oninput=()=>{ _oapiSpec.servers=[{url:$('oapi-server').value}]; };
+  $('btn-oapi-import-all').onclick=()=>{
+    const coll=parseOpenAPI(_oapiSpec);
+    coll._open=true;
+    S.collections.push(coll); saveCollections(); saveCollToFS(coll); renderCollectionTree();
+    closeModal();
+    toast(`Imported ${coll.items.length} requests`,'ok');
+  };
+  openModal('oapi');
+}
+function renderOAPITree(){
+  const tree=$('oapi-tree');
+  const filter=($('oapi-filter').value||'').toLowerCase();
+  const baseUrl=$('oapi-server').value||'';
+  tree.innerHTML='';
+  const paths=_oapiSpec.paths||{};
+  // group by tag → fallback to path prefix
+  const groups={};
+  Object.entries(paths).forEach(([path,methods])=>{
+    Object.entries(methods).forEach(([m,op])=>{
+      if(!['get','post','put','patch','delete','head','options'].includes(m)) return;
+      const text=`${m} ${path} ${op.summary||''} ${op.operationId||''}`.toLowerCase();
+      if(filter&&!text.includes(filter)) return;
+      const tag=(op.tags?.[0])||'default';
+      (groups[tag]=groups[tag]||[]).push({path,method:m,op});
+    });
+  });
+  Object.entries(groups).sort().forEach(([tag,ops])=>{
+    const g=document.createElement('details');
+    g.open=true;
+    g.style.marginBottom='4px';
+    const sum=document.createElement('summary');
+    sum.style.cssText='cursor:pointer;font-size:12px;font-weight:600;padding:4px 6px;color:var(--text-secondary)';
+    sum.textContent=`${tag} (${ops.length})`;
+    g.appendChild(sum);
+    ops.forEach(({path,method,op})=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px;font-family:var(--font-mono)';
+      row.onmouseover=()=>row.style.background='var(--bg-input)';
+      row.onmouseout=()=>row.style.background='';
+      const mUp=method.toUpperCase();
+      row.innerHTML=`<span class="method-tag m-${mUp}" style="min-width:46px;text-align:center">${mUp}</span>`+
+        `<span style="flex:1;color:var(--text-primary)">${esc(path)}</span>`+
+        `<span style="color:var(--text-muted);font-size:11px">${esc(op.summary||op.operationId||'')}</span>`+
+        `<button class="btn-primary" style="font-size:11px;padding:3px 8px">Try</button>`;
+      row.querySelector('button').onclick=(e)=>{
+        e.stopPropagation();
+        const item={ id:uid(), name:op.summary||op.operationId||`${mUp} ${path}`,
+          type:'request', method:mUp, url:baseUrl+path,
+          headers:(op.parameters||[]).filter(p=>p.in==='header').map(p=>({key:p.name,value:'',enabled:true})),
+          params:(op.parameters||[]).filter(p=>p.in==='query').map(p=>({key:p.name,value:'',enabled:true})),
+          bodyMode:'none', bodyRaw:'', bodyForm:[], auth:{type:'none'} };
+        if(op.requestBody){
+          const ct=Object.keys(op.requestBody.content||{})[0]||'';
+          if(ct.includes('json')){
+            item.bodyMode='json';
+            const example=op.requestBody.content[ct]?.example||op.requestBody.content[ct]?.examples?.[Object.keys(op.requestBody.content[ct].examples||{})[0]]?.value;
+            item.bodyRaw=example?JSON.stringify(example,null,2):'{}';
+          } else if(ct.includes('form')){ item.bodyMode='form'; }
+        }
+        newTab(item);
+        closeModal();
+        toast('Loaded into new tab','ok');
+      };
+      g.appendChild(row);
+    });
+    tree.appendChild(g);
+  });
+  if(!tree.children.length){ tree.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">No matching endpoints</div>'; }
+}
+
 // ── Code Gen ──
 let _codeTab=null;
 function generateCode(lang){
@@ -3973,6 +4079,7 @@ function bindEvents(){
     btn.classList.add('active');
     const labels={postman:'Paste Postman Collection JSON',curl:'Paste cURL command',openapi:'Paste OpenAPI JSON/YAML',har:'Paste HAR JSON (from browser DevTools → Network → Save All as HAR)',insomnia:'Paste Insomnia export JSON',bruno:'Paste Bruno collection JSON or .bru text'};
     $('imp-label').textContent=labels[btn.dataset.it]||'Paste content';
+    $('btn-oapi-explore').style.display=btn.dataset.it==='openapi'?'':'none';
   }));
   $('btn-imp-file').onclick=()=>$('imp-file-input').click();
   $('imp-file-input').onchange=async(e)=>{
@@ -3981,6 +4088,15 @@ function bindEvents(){
     $('imp-text').value=await f.text();
   };
   $('btn-confirm-import').onclick=doImport;
+  $('btn-oapi-explore').onclick=()=>{
+    const text=$('imp-text').value.trim();
+    if(!text){ toast('Paste an OpenAPI spec first','err'); return; }
+    try{
+      const json=JSON.parse(text);
+      if(!json.openapi&&!json.swagger&&!json.paths){ toast('Not an OpenAPI document','err'); return; }
+      openOpenAPIExplorer(json);
+    }catch(e){ toast('Parse failed: '+e.message,'err'); }
+  };
 
   // Code gen
   $('btn-code-gen').onclick=openCodeModal;
