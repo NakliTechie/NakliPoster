@@ -5420,6 +5420,11 @@ window.addEventListener('message', (e) => {
 
 // OAuth 2.0 popup callback — if this page is the redirect_uri inside a popup,
 // send the code back to the opener and close without initialising the full app.
+function notifyNakliOSReady(){
+  if(window.parent===window) return;
+  try{ window.parent.postMessage({type:'naklios:ready'},'*'); }catch{}
+}
+
 (function checkOAuthCallback(){
   const p=new URLSearchParams(location.search);
   if((p.get('code')||p.get('error'))&&window.opener){
@@ -5428,6 +5433,7 @@ window.addEventListener('message', (e) => {
     return;
   }
   init();
+  notifyNakliOSReady();
 })();
 </script>
 </body>
