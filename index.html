@@ -1561,6 +1561,21 @@ mark{background:transparent;color:var(--accent);font-weight:600}
     </div>
   </div>
 
+  <div class="modal" id="modal-confirm-action" style="display:none"
+       role="alertdialog" aria-modal="true"
+       aria-labelledby="confirm-action-title" aria-describedby="confirm-action-message">
+    <div class="modal-hdr">
+      <span class="modal-title" id="confirm-action-title">Are you sure?</span>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-action-message" style="margin:0;color:var(--text-secondary);line-height:1.55"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btn-confirm-action-cancel">Cancel</button>
+      <button class="btn-primary" id="btn-confirm-action-ok">Continue</button>
+    </div>
+  </div>
+
 </div>
 
 <div class="ctx" id="ctx-menu" style="display:none"></div>
@@ -1695,15 +1710,40 @@ $('help-tabs')?.addEventListener('click',e=>{
 });
 
 // ── Modal ──
+let _confirmResolver=null;
+let _confirmPreviousFocus=null;
+
 function openModal(name){
   $('modal-overlay').classList.add('open');
   $a('.modal').forEach(m=>m.style.display='none');
   $('modal-'+name).style.display='flex';
 }
+function finishConfirmation(accepted){
+  if(!_confirmResolver) return;
+  const resolve=_confirmResolver;
+  const previousFocus=_confirmPreviousFocus;
+  _confirmResolver=null;
+  _confirmPreviousFocus=null;
+  $('modal-overlay').classList.remove('open');
+  $a('.modal').forEach(m=>m.style.display='none');
+  if(previousFocus instanceof HTMLElement) previousFocus.focus();
+  resolve(accepted);
+}
 function closeModal(){
+  if(_confirmResolver){ finishConfirmation(false); return; }
   if($('modal-link-import')?.style.display!=='none') _pendingImportReply=null;
   $('modal-overlay').classList.remove('open');
   $a('.modal').forEach(m=>m.style.display='none');
+}
+function askForConfirmation({title,message,confirmLabel='Continue'}){
+  if(_confirmResolver) finishConfirmation(false);
+  $('confirm-action-title').textContent=title;
+  $('confirm-action-message').textContent=message;
+  $('btn-confirm-action-ok').textContent=confirmLabel;
+  _confirmPreviousFocus=document.activeElement;
+  openModal('confirm-action');
+  $('btn-confirm-action-cancel').focus();
+  return new Promise(resolve=>{ _confirmResolver=resolve; });
 }
 
 // ── KV Editor ──
@@ -3394,8 +3434,12 @@ function bindEvents(){
 
   // History
   $('hist-search').addEventListener('input',()=>renderHistory($('hist-search').value));
-  $('btn-clear-hist').onclick=()=>{
-    if(!confirm('Clear all history?')) return;
+  $('btn-clear-hist').onclick=async()=>{
+    if(!await askForConfirmation({
+      title:'Clear request history?',
+      message:'Every saved history entry in this browser will be removed. Collections and open tabs are untouched.',
+      confirmLabel:'Clear history',
+    })) return;
     S.history=[]; saveHistory(); renderHistory(); toast('History cleared');
   };
 
@@ -3403,9 +3447,14 @@ function bindEvents(){
   $('env-select').addEventListener('change',e=>switchEnv(e.target.value));
   $('env-quick').addEventListener('change',e=>switchEnv(e.target.value));
   $('btn-new-env').onclick=()=>openModal('new-env');
-  $('btn-del-env').onclick=()=>{
+  $('btn-del-env').onclick=async()=>{
     if(!S.activeEnvId){ toast('No environment selected','err'); return; }
-    if(!confirm('Delete this environment?')) return;
+    const env=S.environments.find(item=>item.id===S.activeEnvId);
+    if(!await askForConfirmation({
+      title:'Delete environment?',
+      message:`"${env?.name||'This environment'}" and all of its variables will be removed from this browser.`,
+      confirmLabel:'Delete environment',
+    })) return;
     S.environments=S.environments.filter(e=>e.id!==S.activeEnvId);
     S.activeEnvId=null;
     saveEnvironments();
@@ -3526,6 +3575,16 @@ function bindEvents(){
     history.replaceState(null,'',location.pathname+location.search);
   };
   $('link-passphrase-input').addEventListener('keydown',e=>{ if(e.key==='Enter') confirmLinkImport(); });
+
+  $('btn-confirm-action-cancel').onclick=()=>finishConfirmation(false);
+  $('btn-confirm-action-ok').onclick=()=>finishConfirmation(true);
+  $('modal-confirm-action').addEventListener('keydown',event=>{
+    if(event.key!=='Tab') return;
+    const cancel=$('btn-confirm-action-cancel');
+    const ok=$('btn-confirm-action-ok');
+    event.preventDefault();
+    (document.activeElement===cancel?ok:cancel).focus();
+  });
 
   // Modal close
   $a('[data-mc]').forEach(btn=>btn.addEventListener('click',closeModal));
@@ -4926,7 +4985,7 @@ function init(){
 
   // Bookmarklet — bake in the current origin so it works wherever NakliPoster is hosted
   const npUrl = location.origin + location.pathname;
-  $('np-bookmarklet').href = "javascript:void(function(){var t=window.getSelection().toString()||document.body.innerText;try{var j=JSON.parse(t),w=window.open('"+npUrl+"','nakliposter');var n=0,iv=setInterval(function(){w.postMessage({type:'np_import',collection:j},'*');if(++n>30)clearInterval(iv)},500);window.addEventListener('message',function h(e){if(e.data&&(e.data.type==='np_import_ack'||e.data.type==='np_import_err')){clearInterval(iv);window.removeEventListener('message',h)}})}catch(e){alert('No valid JSON selected')}}())";
+  $('np-bookmarklet').href = "javascript:void(function(){var t=window.getSelection().toString()||document.body.innerText;try{var j=JSON.parse(t),w=window.open('"+npUrl+"','nakliposter');var n=0,iv=setInterval(function(){w.postMessage({type:'np_import',collection:j},'*');if(++n>30)clearInterval(iv)},500);window.addEventListener('message',function h(e){if(e.data&&(e.data.type==='np_import_ack'||e.data.type==='np_import_err')){clearInterval(iv);window.removeEventListener('message',h)}})}catch(e){var d=document.createElement('div');d.textContent='NakliPoster: no valid collection JSON selected';d.style.cssText='position:fixed;z-index:2147483647;left:50%;bottom:24px;transform:translateX(-50%);padding:10px 14px;border-radius:6px;background:#1f2937;color:#fff;font:13px system-ui;box-shadow:0 8px 24px #0006';document.body.appendChild(d);setTimeout(function(){d.remove()},3500)}}())";
 
   // Load CDN libs then check for share link in fragment
   loadShareLibs().then(()=>checkShareLink());

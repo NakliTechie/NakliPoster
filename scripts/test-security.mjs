@@ -40,5 +40,8 @@ assert.match(html,/e\.origin!==location\.origin/,'developer message API distingu
 assert.match(html,/e\.source!==window\.opener/,'bookmarklet imports are limited to the opener');
 assert.match(html,/function sanitizeSharedItems\(/,'shared collections pass through a script sanitizer');
 assert.match(html,/const \{preScript,testScript,testResults,consoleLogs,_open,_collId,\.\.\.safe\}/,'shared executable fields are stripped');
+assert.match(html,/id="modal-confirm-action"/,'destructive actions use an app-styled alert dialog');
+assert.match(html,/function askForConfirmation\(/,'styled confirmation exposes an async adapter');
+assert.doesNotMatch(html,/\b(?:window\.)?(?:alert|confirm|prompt)\s*\(/,'app and bookmarklet avoid native JavaScript dialogs');
 
 console.log('NakliPoster security contracts: ok');
