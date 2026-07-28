@@ -687,7 +687,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       <div id="coll-toolbar">
         <input id="coll-search" placeholder="Search...">
         <button class="icon-btn" id="btn-runner" title="Collection Runner">▶</button>
-        <button class="icon-btn" id="btn-open-folder" title="Open workspace folder">🗂</button>
+        <button class="icon-btn" id="btn-open-folder" title="Choose workspace storage">🗂</button>
         <button class="icon-btn" id="btn-new-coll" title="New collection" style="font-size:18px;font-weight:300">+</button>
       </div>
       <div id="coll-tree"></div>
@@ -1576,12 +1576,117 @@ mark{background:transparent;color:var(--accent);font-weight:600}
     </div>
   </div>
 
+  <div class="modal" id="modal-storage-location" style="display:none;max-width:500px"
+       role="dialog" aria-modal="true" aria-labelledby="storage-location-title">
+    <div class="modal-hdr">
+      <span class="modal-title" id="storage-location-title">NakliPoster storage</span>
+      <button class="modal-x" data-mc="storage-location" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0 0 12px;color:var(--text-secondary);font-size:12.5px;line-height:1.55">
+        Each location has its own collections and environments. Switching never copies,
+        merges, or deletes workspace data.
+      </p>
+      <div id="storage-location-choices" style="display:grid;gap:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-mc="storage-location">Cancel</button>
+    </div>
+  </div>
+
 </div>
 
 <div class="ctx" id="ctx-menu" style="display:none"></div>
 
 <script>
 'use strict';
+
+/*
+ * naklios.js — cooperative SDK, vendored inline to preserve NakliPoster's
+ * single-file/offline distribution. Standalone-safe.
+ * Canonical source: https://naklios.dev/sdk/naklios.js (MIT).
+ */
+(function installNakliOSSdk(){
+  if(window.naklios) return;
+  let hosted=false;
+  try{ hosted=!!(window.parent&&window.parent!==window); }catch(_){}
+  let theme=null, beforeCloseCb=null, rpcCounter=0;
+  const themeListeners=new Set(), capabilityListeners=new Set(), pending=new Map();
+  const capabilities={hosted,version:1,fs:false,fsBackends:[],fsBackend:null};
+  function send(type,data){
+    if(!hosted) return;
+    try{ window.parent.postMessage(Object.assign({type},data||{}),'*'); }catch(_){}
+  }
+  function rpc(type,payload){
+    if(!hosted) return Promise.reject(new Error('Not hosted — naklios.* unavailable standalone'));
+    return new Promise((resolve,reject)=>{
+      const requestId='r'+(++rpcCounter)+'_'+Date.now();
+      pending.set(requestId,{resolve,reject});
+      send(type,Object.assign({requestId},payload||{}));
+      setTimeout(()=>{
+        if(!pending.has(requestId)) return;
+        pending.delete(requestId);
+        reject(new Error('naklios RPC timeout: '+type));
+      },30000);
+    });
+  }
+  const fsPayload=(data)=>Object.assign({backend:capabilities.fsBackend},data);
+  window.addEventListener('message',event=>{
+    if(hosted&&event.source!==window.parent) return;
+    const msg=event.data;
+    if(!msg||typeof msg!=='object') return;
+    if(msg.type==='naklios:theme'){
+      theme={id:msg.theme,colors:msg.colors,mood:msg.mood};
+      themeListeners.forEach(cb=>{ try{ cb(theme); }catch(_){} });
+    }else if(msg.type==='naklios:beforeclose'){
+      try{ beforeCloseCb?.(); }catch(_){}
+    }else if(msg.type==='naklios:capabilities'){
+      if(typeof msg.fs==='boolean') capabilities.fs=msg.fs;
+      if(Array.isArray(msg.fsBackends)) capabilities.fsBackends=msg.fsBackends;
+      capabilities.fsBackend=typeof msg.fsBackend==='string'?msg.fsBackend:null;
+      capabilityListeners.forEach(cb=>{ try{ cb(capabilities); }catch(_){} });
+    }else if(msg.type==='naklios:fs:reply'&&msg.requestId){
+      const entry=pending.get(msg.requestId);
+      if(!entry) return;
+      pending.delete(msg.requestId);
+      if(msg.error) entry.reject(new Error(msg.error)); else entry.resolve(msg.result);
+    }
+  });
+  window.naklios={
+    version:1,capabilities,
+    ready:()=>send('naklios:ready'),
+    title:value=>send('naklios:title',{title:String(value)}),
+    close:()=>send('naklios:close'),
+    beforeClose:cb=>{ beforeCloseCb=typeof cb==='function'?cb:null; },
+    theme:{
+      get current(){ return theme; },
+      onChange(cb){
+        if(typeof cb!=='function') return ()=>{};
+        themeListeners.add(cb);
+        if(theme) try{ cb(theme); }catch(_){}
+        return ()=>themeListeners.delete(cb);
+      },
+      request:()=>send('naklios:theme-request'),
+    },
+    onCapabilitiesChange(cb){
+      if(typeof cb!=='function') return ()=>{};
+      capabilityListeners.add(cb);
+      try{ cb(capabilities); }catch(_){}
+      return ()=>capabilityListeners.delete(cb);
+    },
+    requestCapabilities:()=>send('naklios:capabilities-request'),
+    fs:{
+      read:path=>rpc('naklios:fs:read',fsPayload({path})),
+      readBinary:path=>rpc('naklios:fs:readBinary',fsPayload({path})),
+      write:(path,data)=>rpc('naklios:fs:write',fsPayload({path,data})),
+      append:(path,line)=>rpc('naklios:fs:append',fsPayload({path,line})),
+      list:prefix=>rpc('naklios:fs:list',fsPayload({prefix:prefix||''})),
+      delete:path=>rpc('naklios:fs:delete',fsPayload({path})),
+      exists:path=>rpc('naklios:fs:exists',fsPayload({path})),
+      useBackend:backend=>rpc('naklios:fs:selectBackend',{backend}),
+    },
+  };
+})();
 
 // ── Constants ──
 const LS = {
@@ -1629,6 +1734,8 @@ const S = window.S = {
   activeEnvId: null,
   globals: {},
   dirHandle: null,
+  storageMode: 'local', // 'local' | 'fs' | 'naklios'
+  _nakliosBackend: null,
   abortCtrl: null,
   history: [],
   cookies: [],
@@ -1651,8 +1758,66 @@ function mkTab(o={}){
 
 // ── Persist ──
 const autosaveTab = debounce(()=>{ lsSet(LS.tabs, S.tabs); lsSet(LS.activeTab, S.activeTabId); }, 600);
-function saveCollections(){ lsSet(LS.collections, S.collections); }
-function saveEnvironments(){ lsSet(LS.environments, S.environments); lsSet(LS.globals, S.globals); lsSet(LS.activeEnv, S.activeEnvId); }
+const HOSTED_WORKSPACE_FILE='nakliposter-workspace.json';
+let _hostedSaveTimer=null;
+let _hostedSaveInFlight=Promise.resolve();
+function hostedWorkspaceSnapshot(){
+  return {
+    version:1,
+    collections:S.collections,
+    environments:S.environments,
+    globals:S.globals,
+    activeEnvId:S.activeEnvId,
+    savedAt:new Date().toISOString(),
+  };
+}
+function scheduleHostedWorkspaceSave(){
+  clearTimeout(_hostedSaveTimer);
+  _hostedSaveTimer=setTimeout(()=>flushHostedWorkspace(),350);
+}
+function cancelScheduledHostedWorkspaceSave(){
+  clearTimeout(_hostedSaveTimer);
+  _hostedSaveTimer=null;
+}
+function flushHostedWorkspace(){
+  clearTimeout(_hostedSaveTimer);
+  _hostedSaveTimer=null;
+  if(S.storageMode!=='naklios') return _hostedSaveInFlight;
+  const payload=JSON.stringify(hostedWorkspaceSnapshot(),null,2);
+  const backendAtQueue=S._nakliosBackend;
+  _hostedSaveInFlight=_hostedSaveInFlight
+    .catch(()=>{})
+    .then(()=>{
+      if(S.storageMode!=='naklios'||S._nakliosBackend!==backendAtQueue) return;
+      return naklios.fs.write(HOSTED_WORKSPACE_FILE,payload);
+    })
+    .catch(error=>{ console.error('NakliOS workspace save failed',error); });
+  return _hostedSaveInFlight;
+}
+async function loadHostedWorkspace(){
+  if(!(await naklios.fs.exists(HOSTED_WORKSPACE_FILE))){
+    return {collections:[],environments:[],globals:{},activeEnvId:null};
+  }
+  const value=JSON.parse(await naklios.fs.read(HOSTED_WORKSPACE_FILE));
+  return {
+    collections:Array.isArray(value.collections)?value.collections:[],
+    environments:Array.isArray(value.environments)?value.environments:[],
+    globals:value.globals&&typeof value.globals==='object'?value.globals:{},
+    activeEnvId:value.activeEnvId||null,
+  };
+}
+function saveCollections(){
+  if(S.storageMode==='naklios') scheduleHostedWorkspaceSave();
+  else lsSet(LS.collections,S.collections);
+}
+function saveEnvironments(){
+  if(S.storageMode==='naklios') scheduleHostedWorkspaceSave();
+  else{
+    lsSet(LS.environments,S.environments);
+    lsSet(LS.globals,S.globals);
+    lsSet(LS.activeEnv,S.activeEnvId);
+  }
+}
 function saveHistory(){ lsSet(LS.history, S.history.slice(0, MAX_HIST)); }
 
 // ── Settings ──
@@ -2939,14 +3104,157 @@ function switchEnv(id){
   saveEnvironments();
   renderEnvSelect();
   renderEnvEditor();
-  $('sb-ws').textContent=S.dirHandle?`📁 ${S.dirHandle.name}`:'No workspace';
+  refreshWorkspaceStatus();
 }
 
 // ── File System ──
+function nakliOSBackendIds(){
+  const rows=Array.isArray(naklios.capabilities.fsBackends)
+    ? naklios.capabilities.fsBackends : [];
+  return rows.map(row=>typeof row==='string'?row:row?.id)
+    .filter(id=>id==='fsa'||id==='crate');
+}
+function nakliOSBackendLabel(id){ return id==='crate'?'Crate':'NakliOS Folder'; }
+function currentNakliOSBackend(){
+  const id=naklios.capabilities.fsBackend;
+  return id==='fsa'||id==='crate'?id:null;
+}
+function waitForNakliOSCapabilities(timeout=1600){
+  if(!naklios.capabilities.hosted) return Promise.resolve(naklios.capabilities);
+  return new Promise(resolve=>{
+    let settled=false;
+    let off=()=>{};
+    const done=()=>{
+      if(settled) return;
+      settled=true;
+      off();
+      resolve(naklios.capabilities);
+    };
+    off=naklios.onCapabilitiesChange(caps=>{
+      if(caps.fs||caps.fsBackends.length) done();
+    });
+    naklios.requestCapabilities();
+    setTimeout(done,timeout);
+  });
+}
+function applyWorkspaceData(data){
+  S.collections=Array.isArray(data.collections)?data.collections:[];
+  S.environments=Array.isArray(data.environments)?data.environments:[];
+  S.globals=data.globals&&typeof data.globals==='object'?data.globals:{};
+  S.activeEnvId=data.activeEnvId||null;
+}
+function localWorkspaceData(){
+  return {
+    collections:lsGet(LS.collections,[]),
+    environments:lsGet(LS.environments,[]),
+    globals:lsGet(LS.globals,{}),
+    activeEnvId:lsGet(LS.activeEnv,null),
+  };
+}
+function renderWorkspaceData(){
+  renderCollectionTree();
+  renderEnvSelect();
+  renderEnvEditor();
+  refreshWorkspaceStatus();
+}
+function refreshWorkspaceStatus(){
+  if(S.storageMode==='naklios'){
+    $('sb-ws').textContent=nakliOSBackendLabel(currentNakliOSBackend());
+  }else if(S.storageMode==='fs'&&S.dirHandle){
+    $('sb-ws').textContent=`📁 ${S.dirHandle.name}`;
+  }else{
+    $('sb-ws').textContent='This browser';
+  }
+  $('btn-open-folder').title=naklios.capabilities.hosted
+    ? 'Choose Browser, NakliOS Folder, Crate, or a direct local folder'
+    : 'Open workspace folder';
+  $('btn-open-folder-2').textContent=naklios.capabilities.hosted?'Choose Storage':'Open Folder';
+}
+async function switchNakliOSBackend(id){
+  if(id===currentNakliOSBackend()&&S.storageMode==='naklios'){
+    closeModal();
+    return;
+  }
+  const previousBackend=S._nakliosBackend;
+  try{
+    if(S.storageMode==='naklios') await flushHostedWorkspace();
+    S._nakliosBackend=id;
+    const changed=await naklios.fs.useBackend(id);
+    if(!changed){ S._nakliosBackend=previousBackend; return; }
+    naklios.capabilities.fsBackend=id;
+    const data=await loadHostedWorkspace();
+    S.storageMode='naklios';
+    S.dirHandle=null;
+    applyWorkspaceData(data);
+    if(_watchInterval){ clearInterval(_watchInterval); _watchInterval=null; }
+    renderWorkspaceData();
+    closeModal();
+    toast(`Now using ${nakliOSBackendLabel(id)}. Nothing was copied or deleted.`,'ok');
+  }catch(error){
+    S._nakliosBackend=previousBackend;
+    console.error(error);
+    toast('Could not switch storage: '+error.message,'err');
+  }
+}
+async function switchToBrowserStorage(){
+  if(S.storageMode==='naklios') await flushHostedWorkspace();
+  S.storageMode='local';
+  S.dirHandle=null;
+  if(_watchInterval){ clearInterval(_watchInterval); _watchInterval=null; }
+  applyWorkspaceData(localWorkspaceData());
+  renderWorkspaceData();
+  closeModal();
+  toast('Using this browser. Hosted workspaces were left untouched.','ok');
+}
+function showStorageLocation(){
+  const choices=$('storage-location-choices');
+  choices.innerHTML='';
+  const add=(label,detail,onClick,current=false)=>{
+    const button=document.createElement('button');
+    button.className='btn-secondary';
+    button.style.cssText='text-align:left;padding:10px 12px;display:grid;gap:3px';
+    const strong=document.createElement('strong');
+    strong.textContent=label+(current?' · Current':'');
+    const small=document.createElement('span');
+    small.style.cssText='font-size:11px;color:var(--text-muted)';
+    small.textContent=detail;
+    button.append(strong,small);
+    button.onclick=onClick;
+    choices.appendChild(button);
+  };
+  add('This browser','localStorage on this device',switchToBrowserStorage,S.storageMode==='local');
+  for(const id of nakliOSBackendIds()){
+    add(
+      nakliOSBackendLabel(id),
+      id==='crate'?'Encrypted, multi-device workspace':'The Folder mounted in NakliOS',
+      ()=>switchNakliOSBackend(id),
+      S.storageMode==='naklios'&&currentNakliOSBackend()===id,
+    );
+  }
+  add(
+    'Direct local folder…',
+    'File System Access workspace; available only in this browser profile',
+    ()=>{ closeModal(); openDirectWorkspace(); },
+    S.storageMode==='fs',
+  );
+  openModal('storage-location');
+}
 async function openWorkspace(){
+  if(naklios.capabilities.hosted){
+    showStorageLocation();
+    return;
+  }
+  return openDirectWorkspace();
+}
+async function openDirectWorkspace(){
   try{
     const dh=await window.showDirectoryPicker({mode:'readwrite'});
+    if(S.storageMode==='naklios'){
+      await flushHostedWorkspace();
+      applyWorkspaceData(localWorkspaceData());
+    }
     S.dirHandle=dh;
+    S.storageMode='fs';
     $('sb-ws').textContent=`📁 ${dh.name}`;
     toast(`Opened: ${dh.name}`,'ok');
     await loadCollectionsFromDir();
@@ -2979,6 +3287,10 @@ async function loadCollectionsFromDir(){
   }
 }
 async function saveCollToFS(coll){
+  if(S.storageMode==='naklios'){
+    scheduleHostedWorkspaceSave();
+    return;
+  }
   if(!S.dirHandle) return;
   try{
     const filename=sanitizeFilename(coll.info?.name||'collection')+'.json';
@@ -2992,7 +3304,7 @@ let _watchInterval=null;
 function startDirWatcher(){
   if(_watchInterval) clearInterval(_watchInterval);
   _watchInterval=setInterval(async()=>{
-    if(!S.dirHandle) return;
+    if(S.storageMode!=='fs'||!S.dirHandle) return;
     try{
       for await(const entry of S.dirHandle.values()){
         if(entry.kind==='file'&&entry.name.endsWith('.json')){
@@ -4924,11 +5236,28 @@ function bindAIEvents(){
 }
 
 // ── Init ──
-function init(){
+async function init(){
   loadSettings();
   loadHistory();
-  loadCollections();
-  loadEnvironments();
+  let loadedHosted=false;
+  if(naklios.capabilities.hosted){
+    const caps=await waitForNakliOSCapabilities();
+    if(caps.fs){
+      try{
+        S.storageMode='naklios';
+        applyWorkspaceData(await loadHostedWorkspace());
+        S._nakliosBackend=currentNakliOSBackend();
+        loadedHosted=true;
+      }catch(error){
+        console.warn('NakliOS workspace unavailable; using browser fallback',error);
+        S.storageMode='local';
+      }
+    }
+  }
+  if(!loadedHosted){
+    loadCollections();
+    loadEnvironments();
+  }
   S.cookies=lsGet(LS.cookies,[]);
 
   // Restore layout
@@ -4972,8 +5301,24 @@ function init(){
   try{ const h=sessionStorage.getItem('np_ai_history'); if(h) ai.history=JSON.parse(h); }catch{}
 
   // Status bar workspace
-  if(S.dirHandle) $('sb-ws').textContent=`📁 ${S.dirHandle.name}`;
-  else $('sb-ws').textContent='No workspace';
+  refreshWorkspaceStatus();
+  naklios.onCapabilitiesChange(caps=>{
+    refreshWorkspaceStatus();
+    const next=caps.fsBackend;
+    if(S.storageMode!=='naklios'||!next||!S._nakliosBackend||next===S._nakliosBackend) return;
+    // Host Settings may rebind the app independently of this picker. Cancel a
+    // queued save and load the newly selected workspace; never write the old
+    // in-memory workspace into the new backend.
+    cancelScheduledHostedWorkspaceSave();
+    S._nakliosBackend=next;
+    loadHostedWorkspace().then(data=>{
+      applyWorkspaceData(data);
+      renderWorkspaceData();
+      toast(`${nakliOSBackendLabel(next)} selected in NakliOS. Nothing was copied.`,'ok');
+    }).catch(error=>console.error('Could not reload changed NakliOS backend',error));
+  });
+  naklios.beforeClose(()=>flushHostedWorkspace());
+  window.addEventListener('beforeunload',()=>{ flushHostedWorkspace(); });
 
   // System theme watcher
   window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{
@@ -5772,8 +6117,7 @@ window.addEventListener('message', (e) => {
 // OAuth 2.0 popup callback — if this page is the redirect_uri inside a popup,
 // send the code back to the opener and close without initialising the full app.
 function notifyNakliOSReady(){
-  if(window.parent===window) return;
-  try{ window.parent.postMessage({type:'naklios:ready'},'*'); }catch{}
+  naklios.ready();
 }
 
 (function checkOAuthCallback(){
@@ -5783,8 +6127,10 @@ function notifyNakliOSReady(){
     setTimeout(()=>window.close(),300);
     return;
   }
-  init();
-  notifyNakliOSReady();
+  init().then(notifyNakliOSReady).catch(error=>{
+    console.error('NakliPoster failed to initialise',error);
+    notifyNakliOSReady();
+  });
 })();
 </script>
 </body>

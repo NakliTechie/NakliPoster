@@ -31,6 +31,10 @@ NakliPoster is the escape route. Everything runs in the browser — your request
 
 ### Collections & Workspaces
 - Collections stored as **Postman v2.1 JSON files on your local disk** via File System Access API — open a folder, work directly in it, no sync, no account
+- When hosted by NakliOS, collections plus environments/globals can live in
+  the mounted Folder or encrypted Crate through the app-scoped SDK. Browser,
+  direct-folder, NakliOS Folder, and Crate workspaces stay separate; changing
+  location never performs an implicit migration.
 - Continuous autosave, directory watcher (new files auto-imported)
 - Environments + Globals with `{{variable}}` interpolation
 - Cookie manager — domain-scoped cookies auto-injected as `Cookie:` header
@@ -124,7 +128,7 @@ Public APIs and well-configured developer APIs generally work without issue.
 | Concern | Solution |
 |---|---|
 | Distribution | Single `index.html` — no build step, no dependencies to install |
-| Storage | File System Access API (primary) + localStorage (fallback) |
+| Storage | Standalone: File System Access API + localStorage fallback. Hosted: app-scoped NakliOS Folder or encrypted Crate. |
 | Collection format | Postman v2.1 JSON (compatible with Postman import/export) |
 | Collaboration | lz-string + AES-256-GCM via Web Crypto API |
 | Git history | isomorphic-git (lazy-loaded from CDN, ~220KB cached) |
