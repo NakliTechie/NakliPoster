@@ -5272,6 +5272,9 @@ function bindAIEvents(){
     $('ai-local-cfg').style.display=ai.mode==='local'?'':'none';
     $('ai-api-cfg').style.display=ai.mode==='api'?'':'none';
     const nk=$('ai-nakli-cfg'); if(nk) nk.style.display=ai.mode==='nakli'?'':'none';
+    if(ai.mode==='nakli') aiSetStatus('Ready · '+(($('ai-nakli-model')?.textContent)||'on-device model'),'ready');
+    else if(ai.mode==='api') aiSetStatus('API mode');
+    else aiSetStatus(ai.modelReady?'Model ready':'No model loaded',ai.modelReady?'ready':'');
     $('ai-send').disabled=ai.mode==='local'?!ai.modelReady:false;
     $('ai-settings').setAttribute('open','');
   }));
