@@ -953,11 +953,15 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       <button class="icon-btn" id="btn-ai-close" title="Close">×</button>
     </div>
     <div class="ai-mode-row">
+      <button class="ai-mode-btn" data-ai-mode="nakli" id="ai-mode-nakli" style="display:none">NakliOS AI</button>
       <button class="ai-mode-btn active" data-ai-mode="local">Local (WebGPU)</button>
       <button class="ai-mode-btn" data-ai-mode="api">API</button>
     </div>
     <details id="ai-settings" open>
       <summary id="ai-settings-summary">⚙ Settings</summary>
+      <div class="ai-settings-body" id="ai-nakli-cfg" style="display:none">
+        <p style="margin:0;font-size:12px;opacity:.75">Uses the shared NakliOS model — <span id="ai-nakli-model">on-device</span>. Private, zero setup. No key, no model to load.</p>
+      </div>
       <div class="ai-settings-body" id="ai-local-cfg">
         <select class="ai-cfg-input" id="ai-model-id">
           <option value="gemma4-e2b">Gemma 4 E2B (~2 GB) — default</option>
@@ -1612,7 +1616,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
   try{ hosted=!!(window.parent&&window.parent!==window); }catch(_){}
   let theme=null, beforeCloseCb=null, rpcCounter=0;
   const themeListeners=new Set(), capabilityListeners=new Set(), pending=new Map();
-  const capabilities={hosted,version:1,fs:false,fsBackends:[],fsBackend:null};
+  const capabilities={hosted,version:1,fs:false,fsBackends:[],fsBackend:null,ai:false,aiModelLabel:null};
   function send(type,data){
     if(!hosted) return;
     try{ window.parent.postMessage(Object.assign({type},data||{}),'*'); }catch(_){}
@@ -1631,6 +1635,34 @@ mark{background:transparent;color:var(--accent);font-weight:600}
     });
   }
   const fsPayload=(data)=>Object.assign({backend:capabilities.fsBackend},data);
+  // Shared host AI (chat) — streamed via naklios:ai:chat / naklios:ai:event.
+  const aiRequests=new Map();
+  function createAiStream(options){
+    if(!hosted) throw new Error('Not hosted — naklios.ai unavailable standalone');
+    if(!capabilities.ai) throw new Error('NakliOS AI is unavailable or not permitted');
+    options=options||{};
+    const requestId='a'+(++rpcCounter)+'_'+Date.now();
+    const queued=[],waiters=[]; let complete=false,failure=null;
+    function deliver(item){ if(waiters.length) waiters.shift().resolve({value:item,done:false}); else queued.push(item); }
+    function finish(){ complete=true; while(waiters.length) waiters.shift().resolve({value:undefined,done:true}); }
+    function fail(err){ failure=err; complete=true; while(waiters.length) waiters.shift().reject(err); }
+    const stream={
+      next(){ if(queued.length) return Promise.resolve({value:queued.shift(),done:false}); if(failure) return Promise.reject(failure); if(complete) return Promise.resolve({value:undefined,done:true}); return new Promise((resolve,reject)=>waiters.push({resolve,reject})); },
+      cancel(){ send('naklios:ai:cancel',{requestId}); },
+    };
+    stream[Symbol.asyncIterator]=()=>stream;
+    aiRequests.set(requestId,{deliver,finish,fail});
+    send('naklios:ai:chat',{requestId,messages:Array.isArray(options.messages)?options.messages:[],maxTokens:options.max_tokens||options.maxTokens});
+    return stream;
+  }
+  async function createAiCompletion(options){
+    options=options||{};
+    const stream=createAiStream(options);
+    if(options.stream===true) return stream;
+    let content='';
+    for await(const chunk of stream){ const c=chunk.choices&&chunk.choices[0]; if(c&&c.delta&&c.delta.content) content+=c.delta.content; }
+    return {choices:[{index:0,message:{role:'assistant',content},finish_reason:'stop'}]};
+  }
   window.addEventListener('message',event=>{
     if(hosted&&event.source!==window.parent) return;
     const msg=event.data;
@@ -1644,12 +1676,24 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       if(typeof msg.fs==='boolean') capabilities.fs=msg.fs;
       if(Array.isArray(msg.fsBackends)) capabilities.fsBackends=msg.fsBackends;
       capabilities.fsBackend=typeof msg.fsBackend==='string'?msg.fsBackend:null;
+      if(typeof msg.ai==='boolean') capabilities.ai=msg.ai;
+      capabilities.aiModelLabel=typeof msg.aiModelLabel==='string'?msg.aiModelLabel:null;
       capabilityListeners.forEach(cb=>{ try{ cb(capabilities); }catch(_){} });
     }else if(msg.type==='naklios:fs:reply'&&msg.requestId){
       const entry=pending.get(msg.requestId);
       if(!entry) return;
       pending.delete(msg.requestId);
       if(msg.error) entry.reject(new Error(msg.error)); else entry.resolve(msg.result);
+    }else if(msg.type==='naklios:ai:event'&&msg.requestId){
+      const req=aiRequests.get(msg.requestId);
+      if(!req) return;
+      if(msg.event==='token'){
+        req.deliver({choices:[{index:0,delta:{content:String(msg.token||'')},finish_reason:null}]});
+      }else if(msg.event==='done'){
+        aiRequests.delete(msg.requestId); req.finish();
+      }else if(msg.event==='error'){
+        aiRequests.delete(msg.requestId); req.fail(new Error(msg.error||'NakliOS AI failed'));
+      }
     }
   });
   window.naklios={
@@ -1685,6 +1729,7 @@ mark{background:transparent;color:var(--accent);font-weight:600}
       exists:path=>rpc('naklios:fs:exists',fsPayload({path})),
       useBackend:backend=>rpc('naklios:fs:selectBackend',{backend}),
     },
+    ai:{ chat:{ completions:{ create:createAiCompletion } } },
   };
 })();
 
@@ -5034,7 +5079,25 @@ async function aiSend(overrideMsg){
     $('ai-send').disabled=(ai.mode==='local'&&!ai.modelReady);
     aiFinalize(wrap,full);
   };
-  if(ai.mode==='local'){
+  if(ai.mode==='nakli'){
+    // Route through the shared NakliOS host AI (general chat → on-device model).
+    ai._nakliStop=false;
+    (async()=>{
+      try{
+        const stream=await window.naklios.ai.chat.completions.create({messages,stream:true,max_tokens:800});
+        ai._activeStream=stream;
+        for await(const chunk of stream){
+          if(ai._nakliStop) break;
+          const tok=chunk.choices?.[0]?.delta?.content||'';
+          if(tok){full+=tok;const el=$(bid);if(el){el.textContent+=tok;$('ai-messages').scrollTop=9999;}}
+        }
+        finish();
+      }catch(err){
+        const el=$(bid);if(el) el.textContent=(full?full+'\n':'')+'Error: '+(err.message||err);
+        ai.streaming=false;$('ai-stop').style.display='none';$('ai-send').disabled=false;
+      }finally{ ai._activeStream=null; }
+    })();
+  } else if(ai.mode==='local'){
     ai.worker.onmessage=({data})=>{
       if(data.type==='token'){
         full+=data.token;
@@ -5193,7 +5256,8 @@ function bindAIEvents(){
   $('btn-ai-fetch-models').onclick=discoverAIModels;
   $('ai-send').onclick=()=>aiSend();
   $('ai-stop').onclick=()=>{
-    if(ai.mode==='local'&&ai.worker) ai.worker.postMessage({type:'stop'});
+    if(ai.mode==='nakli'){ ai._nakliStop=true; try{ ai._activeStream&&ai._activeStream.cancel&&ai._activeStream.cancel(); }catch(_){} }
+    else if(ai.mode==='local'&&ai.worker) ai.worker.postMessage({type:'stop'});
     ai.streaming=false;$('ai-stop').style.display='none';
     $('ai-send').disabled=(ai.mode==='local'&&!ai.modelReady);
   };
@@ -5204,11 +5268,27 @@ function bindAIEvents(){
     $a('.ai-mode-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     ai.mode=btn.dataset.aiMode;
+    ai.modeExplicit=true;  // remember the user's choice; don't auto-flip away
     $('ai-local-cfg').style.display=ai.mode==='local'?'':'none';
     $('ai-api-cfg').style.display=ai.mode==='api'?'':'none';
+    const nk=$('ai-nakli-cfg'); if(nk) nk.style.display=ai.mode==='nakli'?'':'none';
     $('ai-send').disabled=ai.mode==='local'?!ai.modelReady:false;
     $('ai-settings').setAttribute('open','');
   }));
+  // Shared NakliOS AI: offered + defaulted when hosted with host AI; hidden and
+  // inert standalone. Never overrides an explicit user mode choice.
+  window.updateNakliAiMode=function(caps){
+    const on=!!(caps&&caps.ai);
+    const btn=$('ai-mode-nakli'); if(btn) btn.style.display=on?'':'none';
+    const label=$('ai-nakli-model'); if(label&&caps&&caps.aiModelLabel) label.textContent=caps.aiModelLabel;
+    if(on&&!ai.modeExplicit&&ai.mode!=='nakli'){
+      document.querySelector('.ai-mode-btn[data-ai-mode="nakli"]')?.click();
+      ai.modeExplicit=false;
+    }else if(!on&&ai.mode==='nakli'){
+      document.querySelector('.ai-mode-btn[data-ai-mode="local"]')?.click();
+      ai.modeExplicit=false;
+    }
+  };
   $a('.ai-preset').forEach(btn=>btn.addEventListener('click',()=>{
     $a('.ai-preset').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
@@ -5304,6 +5384,7 @@ async function init(){
   refreshWorkspaceStatus();
   naklios.onCapabilitiesChange(caps=>{
     refreshWorkspaceStatus();
+    if(window.updateNakliAiMode) window.updateNakliAiMode(caps);
     const next=caps.fsBackend;
     if(S.storageMode!=='naklios'||!next||!S._nakliosBackend||next===S._nakliosBackend) return;
     // Host Settings may rebind the app independently of this picker. Cancel a
