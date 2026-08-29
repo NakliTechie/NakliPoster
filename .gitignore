@@ -5,6 +5,8 @@
 !.gitignore
 !scripts/
 !scripts/**
+!.github/
+!.github/**
 !test/
 !test/**
 
