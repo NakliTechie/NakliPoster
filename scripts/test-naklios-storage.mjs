@@ -12,7 +12,7 @@ assert.equal(scripts.length,1,'NakliPoster remains a single-file app with one sc
 new vm.Script(scripts[0][1],{filename:'index.html'});
 assert.match(html,/\/\* naklios-sdk:begin ver=\d+ sha256=[0-9a-f]{64}/,'the canonical NakliOS SDK is vendored inline through the marker splice');
 assert.match(html,/useBackend: function \(backend\)\s*\{ return rpc\('naklios:fs:selectBackend'/,'SDK exposes explicit backend selection');
-assert.match(html,/experimental_autosave: function \(opts\)/,'the vendored SDK carries the autosave primitive');
+assert.match(html,/autosave: function \(opts\)/,'the vendored SDK carries the autosave primitive');
 assert.match(html,/const HOSTED_WORKSPACE_FILE='nakliposter-workspace\.json'/,
   'hosted workspace uses an app-scoped document');
 assert.match(html,/collections:S\.collections,[\s\S]*environments:S\.environments,[\s\S]*globals:S\.globals/,
@@ -39,7 +39,7 @@ const appCode=html.replace(/\/\* naklios-sdk:begin[\s\S]*?naklios-sdk:end \*\//,
 assert.notEqual(appCode,html,'the vendored SDK block was found and stripped');
 assert.doesNotMatch(appCode,/addEventListener\(\s*['"]beforeunload['"]|onbeforeunload/,'no app-level beforeunload handler (a save there cannot complete)');
 assert.match(appCode,/function scheduleHostedWorkspaceSave\(\)\{ hostedSaver\(\)\.markDirty\(\); \}/,'every hosted change reaches the autosave');
-assert.match(appCode,/naklios\.fs\.experimental_autosave\(\{\n    save:\(\)=>\{\n      if\(S\.storageMode!=='naklios'\) return;\n      return naklios\.fs\.write\(HOSTED_WORKSPACE_FILE,/,
+assert.match(appCode,/naklios\.fs\.autosave\(\{\n    save:\(\)=>\{\n      if\(S\.storageMode!=='naklios'\) return;\n      return naklios\.fs\.write\(HOSTED_WORKSPACE_FILE,/,
   'the snapshot is taken and the write issued in one call (the write carries its backend)');
 
 console.log('NakliPoster NakliOS storage contracts: ok');
