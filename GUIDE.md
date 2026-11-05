@@ -81,12 +81,12 @@ The `#fragment` is never sent to a server — it exists only in the URL. Share t
 | Storage | Standalone: File System Access API + localStorage fallback. Hosted: app-scoped NakliOS Folder or encrypted Crate. |
 | Collection format | Postman v2.1 JSON (compatible with Postman import/export) |
 | Collaboration | lz-string + AES-256-GCM via Web Crypto API |
-| Git history | isomorphic-git (lazy-loaded from CDN, ~220KB cached) |
+| Git history | isomorphic-git (loaded from CDN on first use, exact version with integrity hash) |
 | AI inference | Transformers.js v4 via WebGPU |
 | Scripting API | Opaque-origin iframe with a copied `pm` capability surface |
 | Developer API | `window.nakliposter` — opt-in frozen object + cross-tab `postMessage` listener |
 | Syntax highlighting | Custom JSON highlighter (zero CDN dependency) |
-| CDN deps | lz-string, qrcodejs — loaded from jsDelivr when the page opens |
+| CDN deps (on first use) | lz-string, qrcodejs — when you share or open a share link; exact versions with integrity hashes |
 
 ## Palette
 
@@ -103,8 +103,8 @@ A few things are worth understanding if you intend to trust the tool with real c
 - **Your environment variables and auth tokens live in this browser profile** — in `localStorage` and, if you've opened a workspace, in the JSON files inside the folder you picked. Anyone with access to that profile or that folder can read them. Don't point NakliPoster at a folder synced to a service you don't fully trust.
 - **Pre-request and test scripts run in a constrained worker sandbox.** Each run receives a structured copy of its request, response, and `pm` variables through a private message channel. The worker sits behind an opaque-origin iframe with a deny-by-default Content Security Policy; it cannot access NakliPoster's DOM, saved tabs, `window.S`, browser storage, parent messaging, or direct network APIs. Scripts can make explicit network requests only through `pm.sendRequest()`, whose parent bridge omits ambient cookies. They can still read values deliberately exposed through `pm` and mutate those values, so only run scripts you trust.
 - **Imports don't carry scripts.** Postman collection imports and NakliPoster share links deliberately strip pre-request and test scripts on the way in, so a shared collection cannot smuggle code into your browser. Scripts only ever exist on tabs you've authored yourself.
-- **Share links are client-encrypted.** Optional passphrase protection uses AES-256-GCM via Web Crypto. Tabs with stored credentials show a warning before sharing; secret-tagged environment variables are excluded from shared links by default.
+- **Share links are client-encrypted.** Optional passphrase protection uses AES-256-GCM via Web Crypto. Environment variables are never part of a share link. Saved request auth, credential headers and collection variables are included, and the share dialog warns you when a link holds them.
 - **The JavaScript API is opt-in and origin-checked.** `window.nakliposter` only exists when you enable it in Settings → Developer. Same-origin `postMessage` imports may run directly; opaque origins are rejected. The cross-origin bookmarklet is accepted only from the window that opened NakliPoster and always requires confirmation. Imported collections go through the same `pmToInternal()` parser as manual imports — no script execution, no eval.
-- **No auto-updates and no remote code.** The tool is one static HTML file. Two small libraries (`lz-string`, `qrcodejs`) load from jsDelivr when the page opens; everything else, including the syntax highlighter, is inline.
+- **Remote code loads only when you use a feature that needs it.** The tool is one static HTML file, and the page opens with no third-party requests. Sharing loads `lz-string` and `qrcodejs`, and git history loads `isomorphic-git`, each from jsDelivr at an exact version with an integrity hash. Local AI loads Transformers.js in a worker from the `@4` range, with no integrity hash, because a module import cannot carry one. The hosted page changes when this repo changes; a copy you clone changes only when you pull.
 
 If you find a security issue, please open an issue at [github.com/NakliTechie/NakliPoster](https://github.com/NakliTechie/NakliPoster).

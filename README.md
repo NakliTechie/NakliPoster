@@ -44,7 +44,7 @@ Write pre-request scripts and Chai-style tests against a `pm` object, then run a
 
 ## Share a request without a server
 
-**Share** puts a request or collection into the URL `#fragment`, which browsers do not send to servers. Add a passphrase to encrypt it with AES-256-GCM, and send the passphrase through a separate channel. Secret-tagged environment variables stay out of shared links by default.
+**Share** puts a request or collection into the URL `#fragment`, which browsers do not send to servers. Add a passphrase to encrypt it with AES-256-GCM, and send the passphrase through a separate channel. Environment variables stay out of shared links. Saved auth goes in, and the dialog warns you when it does.
 
 ## When an API blocks the browser
 
@@ -75,7 +75,7 @@ node scripts/test-naklios-storage.mjs   # NakliOS Folder and Crate workspaces, a
 node scripts/test-security.mjs          # script sandbox, import stripping, message origins
 ```
 
-Both lanes read `index.html` and check these contracts in its source, on every push through `.github/workflows/test.yml`. To check where your data goes, open your browser's Network panel. The page loads two libraries from jsDelivr when it opens, and after that a request sends traffic only to your API.
+Both lanes read `index.html` and check these contracts in its source, on every push through `.github/workflows/test.yml`. To check where your data goes, open your browser's Network panel. After the page loads, nothing leaves until you press **Send**, and a request sends traffic only to your API. Sharing, git history and local AI load their libraries from jsDelivr when you first use them.
 
 ## License
 

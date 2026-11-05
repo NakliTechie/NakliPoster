@@ -44,4 +44,13 @@ assert.match(html,/id="modal-confirm-action"/,'destructive actions use an app-st
 assert.match(html,/function askForConfirmation\(/,'styled confirmation exposes an async adapter');
 assert.doesNotMatch(html,/\b(?:window\.)?(?:alert|confirm|prompt)\s*\(/,'app and bookmarklet avoid native JavaScript dialogs');
 
+assert.doesNotMatch(html,/loadShareLibs\(\)\.then/,'startup makes no CDN request unless the URL holds a share link');
+assert.match(html,/if\(!hash\.startsWith\('#np'\)\) return;\n  await loadShareLibs\(\);/,'share-link open loads the libraries first');
+for(const [,src,integrity] of html.matchAll(/loadCdnScript\('(https:[^']+)','([^']+)'\)/g)){
+  assert.match(src,/@\d+\.\d+\.\d+\//,`${src} pins an exact version`);
+  assert.match(integrity,/^sha384-/,`${src} carries an integrity hash`);
+}
+assert.equal(html.match(/loadCdnScript\('https:/g)?.length,3,'all three page-context CDN scripts use the pinned loader');
+assert.match(html,/_shareType==='collection'\n    \?collectionHasCredentials/,'collection links warn about saved credentials');
+
 console.log('NakliPoster security contracts: ok');
