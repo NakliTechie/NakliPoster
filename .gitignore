@@ -2,6 +2,9 @@
 !index.html
 !README.md
 !LICENSE
+!GUIDE.md
+!marketing/
+!marketing/**
 !.gitignore
 !scripts/
 !scripts/**
